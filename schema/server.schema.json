@@ -33,6 +33,12 @@
       "minimum": 1,
       "maximum": 65535
     },
+    "status_port": {
+      "description": "TCP port of the haulnet-server status endpoint (GET /status). Default 27080; set it only if you changed STATUS_ADDRESS.",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 65535
+    },
     "operator": {
       "type": "object",
       "additionalProperties": false,

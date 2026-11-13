@@ -13,6 +13,14 @@
       "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
     },
     "source_commit": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "compatibility": {
+      "description": "Versions that work with the current game. Compare with the 'luxon' field of a server's GET /status and hide servers that do not match.",
+      "type": "object",
+      "required": ["luxon"],
+      "properties": {
+        "luxon": { "type": "array", "items": { "type": "string" } }
+      }
+    },
     "regions": {
       "description": "All regions in display order.",
       "type": "array",
@@ -54,6 +62,10 @@
           "number": { "type": "integer", "minimum": 1 },
           "host": { "type": "string" },
           "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+          "status_port": {
+            "description": "TCP port of the status endpoint: GET http://<host>:<status_port>/status (IPv6 host in brackets).",
+            "type": "integer", "minimum": 1, "maximum": 65535
+          },
           "operator": {
             "type": "object",
             "required": ["name", "github"],

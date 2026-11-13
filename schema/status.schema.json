@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://haulnet.github.io/haulnet-servers/schema/status.schema.json",
+  "title": "haulnet-server status (as checked by the registry)",
+  "description": "The part of the haulnet-server GET /status answer that the registry relies on. The server may send more fields.",
+  "type": "object",
+  "required": ["haulnet_server", "luxon", "rooms", "players", "accepting"],
+  "properties": {
+    "haulnet_server": { "type": "string", "minLength": 1, "maxLength": 32 },
+    "luxon": { "type": "string", "minLength": 1, "maxLength": 32 },
+    "name": { "type": "string" },
+    "rooms": { "type": "integer", "minimum": 0 },
+    "players": { "type": "integer", "minimum": 0 },
+    "max_rooms": { "type": "integer", "minimum": 0 },
+    "max_players": { "type": "integer", "minimum": 0 },
+    "cpu_busy": { "type": "number", "minimum": 0 },
+    "accepting": { "type": "boolean" },
+    "uptime_s": { "type": "integer", "minimum": 0 }
+  }
+}

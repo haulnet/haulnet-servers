@@ -29,7 +29,7 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
           if [ -n "$BASE_SHA" ]; then
-            python tools/registry.py validate --base "$BASE_SHA"
+            python tools/registry.py validate --base "$BASE_SHA" --probe
           else
             python tools/registry.py validate
           fi
