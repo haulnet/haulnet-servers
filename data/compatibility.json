@@ -1,0 +1,4 @@
+{
+  "$schema": "../schema/compatibility.schema.json",
+  "luxon": ["v1.5"]
+}

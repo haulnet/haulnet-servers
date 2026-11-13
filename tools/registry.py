@@ -2,11 +2,12 @@
 """Validate the Haulnet server registry and build the published server list.
 
 Usage:
-  python tools/registry.py validate [--base REF] [--no-dns]
+  python tools/registry.py validate [--base REF] [--no-dns] [--probe]
   python tools/registry.py build --out DIR
 
 `validate --base REF` also applies the rules for entries added or changed since REF
 (the pull request base). Without it, every entry is treated as unchanged.
+`--probe` asks the haulnet-server status endpoint of every added or changed entry.
 """
 
 from __future__ import annotations
@@ -20,7 +21,10 @@ import re
 import socket
 import subprocess
 import sys
+import time
 import unicodedata
+import urllib.error
+import urllib.request
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import TimeoutError as FutureTimeout
 from dataclasses import dataclass, field
@@ -31,10 +35,16 @@ from jsonschema import Draft202012Validator
 
 ROOT = Path(__file__).resolve().parent.parent
 LOCATIONS_FILE = "data/locations.json"
+COMPATIBILITY_FILE = "data/compatibility.json"
 SERVERS_DIR = "servers"
 PLACEHOLDER = "servers/.gitkeep"
 SCHEMA_VERSION = 1
 DNS_TIMEOUT = 10.0
+DEFAULT_STATUS_PORT = 27080
+LUXON_WEB_PORT = 5088  # LuxonServer's own web API: no authentication, must never be public
+STATUS_TIMEOUT = 5.0
+STATUS_ATTEMPTS = 2
+STATUS_MAX_BYTES = 64 * 1024
 
 HOSTNAME_LABEL = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$")
 TLD = re.compile(r"^(?:[a-z]{2,63}|xn--[a-z0-9-]{1,59})$")
@@ -77,6 +87,11 @@ class Server:
     region_name: str = ""
     city_name: str = ""
     status: str = "unchanged"  # unchanged | added | changed
+    probe: dict | None = None  # answer of the status endpoint, when it was asked
+
+    @property
+    def status_port(self) -> int:
+        return self.data.get("status_port", DEFAULT_STATUS_PORT)
 
     @property
     def id(self) -> str:
@@ -322,6 +337,9 @@ def load_servers(locations, report: Report, base: str | None) -> list[Server]:
         # The game renders rich-text tags in labels; a name must not be able to restyle the menu.
         if "<" in data["operator"]["name"] or ">" in data["operator"]["name"]:
             report.error(path, "operator.name must not contain '<' or '>'")
+        if server.status_port == LUXON_WEB_PORT:
+            report.error(path, f"status_port {LUXON_WEB_PORT} is LuxonServer's own web API, which must never be public; "
+                               f"use the haulnet-server status endpoint (default {DEFAULT_STATUS_PORT})")
         check_host(server, report)
         servers.append(server)
 
@@ -336,33 +354,128 @@ def load_servers(locations, report: Report, base: str | None) -> list[Server]:
     return servers
 
 
-def validate(base: str | None, dns: bool) -> tuple[Report, object, list[Server]]:
+# ---------------------------------------------------------------- status endpoint
+
+
+class StatusError(Exception):
+    pass
+
+
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, *args, **kwargs):
+        return None  # a status endpoint answers directly; a redirect surfaces as HTTP 3xx
+
+
+def status_url(host: str, port: int) -> str:
+    return f"http://{'[' + host + ']' if ':' in host else host}:{port}/status"
+
+
+def fetch_status(host: str, port: int, timeout: float = STATUS_TIMEOUT) -> dict:
+    """GET /status of a haulnet-server; raises StatusError with a reason an operator can act on."""
+    request = urllib.request.Request(status_url(host, port),
+                                     headers={"User-Agent": "haulnet-servers-ci", "Accept": "application/json"})
+    opener = urllib.request.build_opener(_NoRedirect)
+    try:
+        with opener.open(request, timeout=timeout) as response:
+            body = response.read(STATUS_MAX_BYTES + 1)
+    except urllib.error.HTTPError as exc:
+        if exc.code == 503:
+            raise StatusError("answers HTTP 503: LuxonServer is not running or not answering") from None
+        raise StatusError(f"answers HTTP {exc.code}") from None
+    except (urllib.error.URLError, OSError) as exc:
+        reason = getattr(exc, "reason", exc)
+        raise StatusError(f"is not reachable ({reason}); open TCP port {port} or set status_port") from None
+    if len(body) > STATUS_MAX_BYTES:
+        raise StatusError("answer is larger than 64 KiB")
+    try:
+        return json.loads(body.decode("utf-8"))
+    except (UnicodeDecodeError, ValueError):
+        raise StatusError("answer is not JSON") from None
+
+
+def fetch_with_retry(host: str, port: int) -> dict:
+    for attempt in range(STATUS_ATTEMPTS):
+        try:
+            return fetch_status(host, port)
+        except StatusError as exc:
+            permanent = "HTTP 4" in str(exc) or "HTTP 3" in str(exc) or "JSON" in str(exc) or "64 KiB" in str(exc)
+            if permanent or attempt + 1 == STATUS_ATTEMPTS:
+                raise
+            time.sleep(2)
+    raise AssertionError("unreachable")
+
+
+def check_status(servers: list[Server], supported: list[str], report: Report) -> None:
+    failed = {path for path, _ in report.errors}
+    targets = [s for s in servers if s.status != "unchanged" and s.path not in failed]
+    if not targets:
+        return
+    validator = schema_validator("status.schema.json")
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        futures = {s.path: pool.submit(fetch_with_retry, s.data["host"], s.status_port) for s in targets}
+        for s in targets:
+            url = status_url(s.data["host"], s.status_port)
+            try:
+                data = futures[s.path].result()
+            except StatusError as exc:
+                report.error(s.path, f"status endpoint {url} {exc}")
+                continue
+            problems = Report()
+            if schema_errors(validator, data, s.path, problems):
+                details = "; ".join(m.removeprefix("schema: ") for _, m in problems.errors)
+                report.error(s.path, f"status endpoint {url} does not answer like haulnet-server: {details}")
+                continue
+            s.probe = data
+            if data["luxon"] not in supported:
+                report.error(s.path, f"the server runs LuxonServer {data['luxon']}, which does not work with the current game "
+                                     f"(supported: {', '.join(supported)}); update haulnet-server")
+            if not data["accepting"]:
+                report.warn(s.path, "the server reports that it does not accept new games right now")
+
+
+def load_compatibility(report: Report) -> list[str] | None:
+    data = load_json(ROOT / COMPATIBILITY_FILE, report)
+    if data is None or schema_errors(schema_validator("compatibility.schema.json"), data, COMPATIBILITY_FILE, report):
+        return None
+    return data["luxon"]
+
+
+def validate(base: str | None, dns: bool, probe: bool = False):
     report = Report()
     locations = load_locations(report)
+    supported = load_compatibility(report)
     servers: list[Server] = []
     if locations is not None:
         servers = load_servers(locations, report, base)
         if dns and not any(path.startswith(SERVERS_DIR) for path, _ in report.errors):
             check_dns(servers, report)
-    return report, locations, servers
+        if probe and supported is not None:
+            check_status(servers, supported, report)
+    return report, locations, supported, servers
 
 
 def summary(servers: list[Server], report: Report) -> str:
     lines = [f"**{len(servers)}** server(s) in the registry; {len(report.errors)} error(s), {len(report.warnings)} warning(s)."]
     touched = [s for s in servers if s.status != "unchanged"]
     if touched:
-        lines += ["", "| Change | Name | Address | Operator |", "|---|---|---|---|"]
+        lines += ["", "| Change | Name | Address | Operator | Status endpoint |", "|---|---|---|---|---|"]
         for s in touched:
             op = s.data["operator"]
             name = op["name"].replace("|", "\\|")
-            lines.append(f"| {s.status} | {s.display_name} | `{s.data['host']}:{s.data['port']}` | {name} (@{op['github']}) |")
+            if s.probe:
+                p = s.probe
+                state = (f"haulnet-server {p['haulnet_server']}, LuxonServer {p['luxon']}, "
+                         f"{p['rooms']} room(s), {p['players']} player(s)").replace("|", "\\|")
+            else:
+                state = "not checked"
+            lines.append(f"| {s.status} | {s.display_name} | `{s.data['host']}:{s.data['port']}` | {name} (@{op['github']}) | {state} |")
     return "\n".join(lines) + "\n"
 
 
 # ---------------------------------------------------------------- build
 
 
-def build_list(locations, servers: list[Server], commit: str, updated_at: str) -> dict:
+def build_list(locations, supported: list[str], servers: list[Server], commit: str, updated_at: str) -> dict:
     regions, cities = locations
     region_order = list(regions)
     servers = sorted(servers, key=lambda s: (region_order.index(s.region), s.city_name, s.data["number"]))
@@ -379,12 +492,14 @@ def build_list(locations, servers: list[Server], commit: str, updated_at: str) -
     def server_entry(s: Server) -> dict:
         op = {k: s.data["operator"][k] for k in ("name", "github", "contact") if k in s.data["operator"]}
         return {"id": s.id, "display_name": s.display_name, "region": s.region, "city": s.data["city"],
-                "number": s.data["number"], "host": s.data["host"], "port": s.data["port"], "operator": op}
+                "number": s.data["number"], "host": s.data["host"], "port": s.data["port"],
+                "status_port": s.status_port, "operator": op}
 
     return {
         "schema_version": SCHEMA_VERSION,
         "updated_at": updated_at,
         "source_commit": commit,
+        "compatibility": {"luxon": list(supported)},
         "regions": [{"id": r["id"], "name": r["name"]} for r in regions.values()],
         "cities": [city_entry(c) for c in used],
         "servers": [server_entry(s) for s in servers],
@@ -426,7 +541,7 @@ Updated {html.escape(listing['updated_at'])}. Source:
 
 
 def build(out: Path, commit: str | None, updated_at: str | None) -> int:
-    report, locations, servers = validate(base=None, dns=False)
+    report, locations, supported, servers = validate(base=None, dns=False)
     report.emit()
     if report.errors:
         print(f"Registry has {len(report.errors)} error(s); nothing was built.", file=sys.stderr)
@@ -436,7 +551,7 @@ def build(out: Path, commit: str | None, updated_at: str | None) -> int:
     if not updated_at:
         stamp = int(git("log", "-1", "--format=%ct").strip())
         updated_at = datetime.fromtimestamp(stamp, timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-    listing = build_list(locations, servers, commit, updated_at)
+    listing = build_list(locations, supported, servers, commit, updated_at)
 
     check = Report()
     if schema_errors(schema_validator(f"servers-v{SCHEMA_VERSION}.schema.json"), listing, "v1/servers.json", check):
@@ -460,6 +575,7 @@ def main() -> int:
     v = sub.add_parser("validate", help="check the registry")
     v.add_argument("--base", help="git ref of the pull request base; enables the rules for added entries")
     v.add_argument("--no-dns", action="store_true", help="skip DNS resolution and duplicate-IP checks")
+    v.add_argument("--probe", action="store_true", help="ask the status endpoint of added or changed entries")
     b = sub.add_parser("build", help="build the published list")
     b.add_argument("--out", required=True, type=Path)
     b.add_argument("--commit", help="override the source commit (default: HEAD)")
@@ -469,7 +585,7 @@ def main() -> int:
     if args.command == "build":
         return build(args.out, args.commit, args.updated_at)
 
-    report, _, servers = validate(args.base, dns=not args.no_dns)
+    report, _, _, servers = validate(args.base, dns=not args.no_dns, probe=args.probe)
     report.emit()
     text = summary(servers, report)
     print(text, end="")

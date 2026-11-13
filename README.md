@@ -24,6 +24,7 @@ After every merge to `main`, CI publishes the list to GitHub Pages:
   "schema_version": 1,
   "updated_at": "2026-11-14T12:00:00Z",
   "source_commit": "<40 hex characters>",
+  "compatibility": { "luxon": ["v1.5"] },
   "regions": [{ "id": "europe", "name": "Europe" }],
   "cities": [{ "id": "moscow", "name": "Moscow", "country": "RU", "region": "europe",
                "display_name": "Europe [Moscow]" }],
@@ -31,7 +32,7 @@ After every merge to `main`, CI publishes the list to GitHub Pages:
     "id": "europe-moscow-1",
     "display_name": "Europe [Moscow] #1",
     "region": "europe", "city": "moscow", "number": 1,
-    "host": "msk1.example.org", "port": 27000,
+    "host": "msk1.example.org", "port": 27000, "status_port": 27080,
     "operator": { "name": "Example Team", "github": "example-user", "contact": "https://example.org/" }
   }]
 }
@@ -39,6 +40,9 @@ After every merge to `main`, CI publishes the list to GitHub Pages:
 
 - `regions` lists every region in display order; `cities` lists only cities that have servers.
 - `servers` are ordered by region, city name and number. Use `id` to refer to a server, not `display_name`.
+- Live load and version: `GET http://<host>:<status_port>/status` (IPv6 hosts in brackets) answers the
+  `haulnet-server` status. A server whose `luxon` version is not in `compatibility.luxon` does not work with
+  the current game.
 - Version 1 may gain new optional fields; readers must ignore fields they do not know. A change that would
   break existing readers is published under a new path (`/v2/`) while `/v1/` keeps being updated.
 
@@ -57,7 +61,7 @@ Nobody types the name: CI builds it from the entry, so it is always consistent.
 ## Adding a server
 
 One pull request per server. Your server must run the `haulnet-server` package and be reachable from the
-internet.
+internet: UDP 27000–27002 for players and TCP 27080 (the status endpoint) for the mod and for CI.
 
 1. Fork this repository.
 2. Find your city in [`data/locations.json`](data/locations.json). If it is missing, add it:
@@ -89,6 +93,7 @@ internet.
    | `number` | the number from step 3, same as in the file name |
    | `host` | public DNS name in lowercase, or a public IPv4/IPv6 address without brackets |
    | `port` | UDP port of the server's NameServer |
+   | `status_port` | optional: TCP port of the status endpoint, only if you changed `STATUS_ADDRESS` (default 27080). Never LuxonServer's own web API (5088) |
    | `operator.name` | person or team shown to players, 2–48 characters, no `<` or `>` |
    | `operator.github` | GitHub account that answers reports about the server |
    | `operator.contact` | optional: an `https://` link or a `mailto:` address |
@@ -104,13 +109,16 @@ internet.
 - numbers are unique per city, and a new server takes the smallest free number;
 - `host` is a valid DNS name or public IP address (no private, loopback, CGNAT, documentation or reserved
   ranges and names), and `host` + `port` is not listed twice;
-- DNS names resolve to public addresses, and no two entries point at the same address and port.
+- DNS names resolve to public addresses, and no two entries point at the same address and port;
+- for every added or changed entry: `GET http://<host>:<status_port>/status` answers within 5 seconds like
+  `haulnet-server` does, and its `luxon` version is listed in [`data/compatibility.json`](data/compatibility.json).
+  Bring the server up before you open the pull request.
 
 Run the same checks locally (Python 3.10+):
 
 ```bash
 pip install -r tools/requirements.txt
-python tools/registry.py validate --base origin/main
+python tools/registry.py validate --base origin/main --probe
 python tools/registry.py build --out site
 ```
 
