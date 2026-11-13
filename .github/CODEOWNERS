@@ -1,0 +1,6 @@
+# Maintainers review everything; changes to the rules, tools and locations need a maintainer.
+*                 @belomaxorka
+/data/            @belomaxorka
+/schema/          @belomaxorka
+/tools/           @belomaxorka
+/.github/         @belomaxorka

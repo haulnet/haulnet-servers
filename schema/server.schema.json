@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://haulnet.github.io/haulnet-servers/schema/server.schema.json",
+  "title": "Haulnet community server",
+  "description": "One file per server: servers/<region>/<city>-<number>.json. The display name '<Region> [<City>] #<number>' is derived from these fields; do not add it.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["city", "number", "host", "port", "operator"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "city": {
+      "description": "City id from data/locations.json.",
+      "type": "string",
+      "pattern": "^[a-z]+(-[a-z]+)*$",
+      "maxLength": 40
+    },
+    "number": {
+      "description": "Server number within the city. A new server takes the smallest number not used in its city.",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 99
+    },
+    "host": {
+      "description": "Public DNS name (lowercase) or public IPv4/IPv6 address, without port or brackets.",
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 253,
+      "pattern": "^[a-z0-9.:-]+$"
+    },
+    "port": {
+      "description": "UDP port of the server's NameServer.",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 65535
+    },
+    "operator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "github"],
+      "properties": {
+        "name": {
+          "description": "Person or team running the server, shown to players.",
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 48,
+          "pattern": "^\\S(?:.*\\S)?$"
+        },
+        "github": {
+          "description": "GitHub account responsible for the server.",
+          "type": "string",
+          "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9]|-(?=[A-Za-z0-9])){0,38}$"
+        },
+        "contact": {
+          "description": "Optional public contact: an https:// link or a mailto: address.",
+          "type": "string",
+          "maxLength": 200,
+          "pattern": "^(https://|mailto:)[^\\s]+$"
+        }
+      }
+    }
+  }
+}

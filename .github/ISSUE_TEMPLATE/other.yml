@@ -1,0 +1,9 @@
+name: Other
+description: A question or suggestion about the registry itself.
+body:
+  - type: textarea
+    id: details
+    attributes:
+      label: Details
+    validations:
+      required: true

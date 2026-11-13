@@ -1,0 +1,29 @@
+name: Report a server problem
+description: A listed server is down, misbehaving or breaks the rules.
+labels: ["server-problem"]
+body:
+  - type: input
+    id: server
+    attributes:
+      label: Server
+      description: The name as shown in the game, e.g. "Europe [Moscow] #1".
+    validations:
+      required: true
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Problem
+      options:
+        - Cannot connect / server is down
+        - Very high ping or lag
+        - Abuse or rule violation by the operator
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Details
+      description: When it happened, what you saw, your approximate location. Do not post personal data.
+    validations:
+      required: true
