@@ -1,0 +1,11 @@
+{
+  "$schema": "../../schema/server.schema.json",
+  "city": "moscow",
+  "number": 1,
+  "host": "1.1.1.1",
+  "port": 27000,
+  "operator": {
+    "name": "Registry CI test",
+    "github": "belomaxorka"
+  }
+}
