@@ -1,0 +1,7 @@
+{
+  "city": "paris",
+  "number": 3,
+  "host": "nx-7f3a9c.haulnet-registry-test.com",
+  "port": 27000,
+  "operator": { "name": "Registry CI test", "github": "belomaxorka" }
+}

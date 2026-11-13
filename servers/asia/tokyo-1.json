@@ -1,0 +1,8 @@
+{
+  "city": "tokyo",
+  "number": 1,
+  "name": "Best server EVER",
+  "host": "game.example.com",
+  "port": 27000,
+  "operator": { "name": "Registry CI test", "github": "belomaxorka" }
+}
