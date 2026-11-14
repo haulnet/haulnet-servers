@@ -518,6 +518,9 @@ def render_index(listing: dict) -> str:
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Haulnet servers</title>
+<link rel="icon" href="favicon.ico" sizes="32x32">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>
 body {{ font: 15px/1.5 system-ui, sans-serif; max-width: 52rem; margin: 2rem auto; padding: 0 1rem; }}
 table {{ border-collapse: collapse; width: 100%; }}
@@ -563,6 +566,9 @@ def build(out: Path, commit: str | None, updated_at: str | None) -> int:
     (out / "v1" / "servers.json").write_text(json.dumps(listing, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
     for schema in sorted((ROOT / "schema").glob("*.json")):
         (out / "schema" / schema.name).write_bytes(schema.read_bytes())
+    # Static files of the web page (favicons), copied as they are.
+    for asset in sorted((ROOT / "pages").iterdir()):
+        (out / asset.name).write_bytes(asset.read_bytes())
     (out / "index.html").write_text(render_index(listing), encoding="utf-8", newline="\n")
     (out / ".nojekyll").write_text("", encoding="utf-8")
     print(f"Built {out / 'v1' / 'servers.json'}: {len(listing['servers'])} server(s) in {len(listing['cities'])} city(ies).")
