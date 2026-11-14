@@ -32,9 +32,10 @@
   };
 
   const clear = () => {
+    historyLoaded = 0;
     for (const row of table.tBodies[0].rows) {
       if (!row.dataset.id) continue;
-      for (const col of ["state", "load", "version", "uptime"]) set(row, col, "—");
+      for (const col of ["state", "load", "version", "uptime", "history"]) set(row, col, "—");
     }
   };
 
@@ -81,12 +82,76 @@
         `It shows whether a server answers, not your ping: the game measures that itself.`;
   };
 
+  // History: one bar per UTC day for the last 30 days, loaded once per page view and every 10 minutes.
+  const DAYS = 30;
+  const HISTORY_MS = 600000;
+  const SVG = "http://www.w3.org/2000/svg";
+  let historyLoaded = 0;
+  const historyUrl = (id) => url.replace(/status\.json$/, `history/${encodeURIComponent(id)}.json`);
+  const dayKey = (t) => new Date(t).toISOString().slice(0, 10);
+
+  const drawHistory = (cell, doc, now) => {
+    const byDate = new Map(doc.days.map((d) => [d.date, d]));
+    const svg = document.createElementNS(SVG, "svg");
+    svg.setAttribute("viewBox", `0 0 ${DAYS * 5} 18`);
+    svg.setAttribute("class", "bars");
+    svg.setAttribute("role", "img");
+    let known = 0, good = 0;
+    for (let i = 0; i < DAYS; i++) {
+      const date = dayKey(now - (DAYS - 1 - i) * 86400000);
+      const d = byDate.get(date);
+      const rect = document.createElementNS(SVG, "rect");
+      rect.setAttribute("x", String(i * 5));
+      rect.setAttribute("width", "3.5");
+      rect.setAttribute("rx", "1");
+      const title = document.createElementNS(SVG, "title");
+      if (d && d.checks > 0) {
+        const share = d.ok / d.checks;
+        known += d.checks; good += d.ok;
+        rect.setAttribute("y", "0");
+        rect.setAttribute("height", "18");
+        rect.setAttribute("class", share >= 0.99 ? "ok" : share >= 0.9 ? "warn" : "bad");
+        const players = d.players_max === null ? "" : `, up to ${d.players_max} players`;
+        title.textContent = `${date}: ${percent(share)} answered${players}`;
+      } else {
+        rect.setAttribute("y", "8");
+        rect.setAttribute("height", "2");
+        rect.setAttribute("class", "none");
+        title.textContent = `${date}: no data`;
+      }
+      rect.appendChild(title);
+      svg.appendChild(rect);
+    }
+    svg.setAttribute("aria-label", known ? `Last ${DAYS} days: ${percent(good / known)} of checks answered` : "No history yet");
+    cell.textContent = "";
+    cell.className = "";
+    cell.appendChild(svg);
+  };
+
+  const loadHistory = (servers) => {
+    const now = Date.now();
+    if (now - historyLoaded < HISTORY_MS) return;
+    historyLoaded = now;
+    for (const row of table.tBodies[0].rows) {
+      const cell = row.querySelector('[data-col="history"]');
+      if (!cell || !servers.some((s) => s.id === row.dataset.id)) continue;
+      fetch(historyUrl(row.dataset.id))
+        .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
+        .then((doc) => {
+          if (doc.schema_version !== 1 || !Array.isArray(doc.days)) throw new Error("unknown format");
+          drawHistory(cell, doc, now);
+        })
+        .catch(() => { cell.textContent = "—"; });
+    }
+  };
+
   const load = () => {
     fetch(url, { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
       .then((doc) => {
         if (doc.schema_version !== 1 || !Array.isArray(doc.servers)) throw new Error("unknown format");
         render(doc);
+        loadHistory(doc.servers);
       })
       .catch(() => {
         clear();

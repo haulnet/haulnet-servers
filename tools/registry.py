@@ -510,12 +510,13 @@ def build_list(locations, supported: list[str], servers: list[Server], commit: s
 
 def render_index(listing: dict) -> str:
     dash = '<td data-col="state">—</td><td data-col="load">—</td><td data-col="version">—</td><td data-col="uptime">—</td>'
+    dash += '<td data-col="history">—</td>'
     rows = "\n".join(
         f'<tr data-id="{html.escape(s["id"])}"><td>{html.escape(s["display_name"])}</td>{dash}'
         f'<td><code>{html.escape(s["host"])}:{s["port"]}</code></td>'
         f'<td>{html.escape(s["operator"]["name"])}</td></tr>'
         for s in listing["servers"]
-    ) or '<tr><td colspan="7">No servers yet.</td></tr>'
+    ) or '<tr><td colspan="8">No servers yet.</td></tr>'
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -536,6 +537,9 @@ th, td {{ text-align: left; padding: .35rem .5rem; border-bottom: 1px solid #888
 th, td[data-col], td code {{ white-space: nowrap; }}
 #status-note {{ color: var(--muted); font-size: 13px; }}
 .ok {{ color: var(--ok); }} .warn {{ color: var(--warn); }} .bad {{ color: var(--bad); }}
+.bars {{ display: block; width: 150px; height: 18px; }}
+.bars .ok {{ fill: var(--ok); }} .bars .warn {{ fill: var(--warn); }} .bars .bad {{ fill: var(--bad); }}
+.bars .none {{ fill: var(--muted); opacity: .45; }}
 </style>
 </head>
 <body>
@@ -545,7 +549,7 @@ Updated {html.escape(listing['updated_at'])}. Source:
 <a href="https://github.com/haulnet/haulnet-servers">haulnet/haulnet-servers</a>.</p>
 <div class="wrap">
 <table data-status-url="{html.escape(MONITOR_STATUS_URL)}">
-<thead><tr><th>Server</th><th>Status</th><th>Load</th><th>Version</th><th>Uptime (30 days)</th><th>Address</th><th>Operator</th></tr></thead>
+<thead><tr><th>Server</th><th>Status</th><th>Load</th><th>Version</th><th>Uptime (30 days)</th><th>Last 30 days</th><th>Address</th><th>Operator</th></tr></thead>
 <tbody>
 {rows}
 </tbody>

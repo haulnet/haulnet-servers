@@ -58,6 +58,11 @@ status endpoint once a minute from Moscow over IPv4 and keeps the results for 90
 | `https://monitor.haulnet.cc/v1/status.json` | state (`online`, `offline` after 3 failed checks in a row, `pending`), versions, rooms and players, uptime for 24 hours, 7 and 30 days |
 | `https://monitor.haulnet.cc/v1/history/<id>.json` | daily totals of one server for the last 30 days |
 
+The page also draws one bar per day for the last 30 days. When a listed server stays unreachable for an hour,
+reports a LuxonServer version the game does not support, or runs an old `haulnet-server` release for a long time
+(two weeks; two days when a minor version behind), the monitor opens an issue here that mentions the operator's
+`operator.github` account, and closes it when the problem is gone.
+
 The monitor shows whether a server answers from one place; it is not the ping of a player. It never changes
 `servers.json`: a server is removed only by a pull request. The mod does not use the monitor and checks servers
 itself.
