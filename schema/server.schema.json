@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://haulnet.github.io/haulnet-servers/schema/server.schema.json",
+  "$id": "https://servers.haulnet.cc/schema/server.schema.json",
   "title": "Haulnet community server",
   "description": "One file per server: servers/<region>/<city>-<number>.json. The display name '<Region> [<City>] #<number>' is derived from these fields; do not add it.",
   "type": "object",

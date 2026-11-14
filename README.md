@@ -11,13 +11,14 @@ Haulnet is a fan project. It is not affiliated with or endorsed by semiwork (R.E
 
 ## The published list
 
-After every merge to `main`, CI publishes the list to GitHub Pages:
+After every merge to `main`, CI publishes the list to GitHub Pages at `servers.haulnet.cc`
+(the old `haulnet.github.io/haulnet-servers/` addresses redirect there):
 
 | URL | Contents |
 |---|---|
-| `https://haulnet.github.io/haulnet-servers/v1/servers.json` | the list, schema version 1 |
-| `https://haulnet.github.io/haulnet-servers/` | the same list as a web page |
-| `https://haulnet.github.io/haulnet-servers/schema/servers-v1.schema.json` | JSON Schema of the list |
+| `https://servers.haulnet.cc/v1/servers.json` | the list, schema version 1 |
+| `https://servers.haulnet.cc/` | the same list as a web page |
+| `https://servers.haulnet.cc/schema/servers-v1.schema.json` | JSON Schema of the list |
 
 ```json
 {

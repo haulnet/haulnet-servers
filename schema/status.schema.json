@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://haulnet.github.io/haulnet-servers/schema/status.schema.json",
+  "$id": "https://servers.haulnet.cc/schema/status.schema.json",
   "title": "haulnet-server status (as checked by the registry)",
   "description": "The part of the haulnet-server GET /status answer that the registry relies on. The server may send more fields.",
   "type": "object",

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://haulnet.github.io/haulnet-servers/schema/locations.schema.json",
+  "$id": "https://servers.haulnet.cc/schema/locations.schema.json",
   "title": "Haulnet registry locations",
   "description": "Fixed regions and the controlled list of cities. Cross-checks (unique ids, slugs, order) are done by tools/registry.py.",
   "type": "object",
