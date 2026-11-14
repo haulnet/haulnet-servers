@@ -26,6 +26,7 @@ After every merge to `main`, CI publishes the list to GitHub Pages at `servers.h
   "updated_at": "2026-11-14T12:00:00Z",
   "source_commit": "<40 hex characters>",
   "compatibility": { "luxon": ["v1.5"] },
+  "status_url": "https://monitor.haulnet.cc/v1/status.json",
   "regions": [{ "id": "europe", "name": "Europe" }],
   "cities": [{ "id": "moscow", "name": "Moscow", "country": "RU", "region": "europe",
                "display_name": "Europe [Moscow]" }],
@@ -44,6 +45,7 @@ After every merge to `main`, CI publishes the list to GitHub Pages at `servers.h
 - Live load and version: `GET http://<host>:<status_port>/status` (IPv6 hosts in brackets) answers the
   `haulnet-server` status. A server whose `luxon` version is not in `compatibility.luxon` does not work with
   the current game.
+- `status_url` (optional) names the live document of the registry monitor (see "Live status" below).
 - Version 1 may gain new optional fields; readers must ignore fields they do not know. A change that would
   break existing readers is published under a new path (`/v2/`) while `/v1/` keeps being updated.
 
@@ -64,8 +66,10 @@ reports a LuxonServer version the game does not support, or runs an old `haulnet
 `operator.github` account, and closes it when the problem is gone.
 
 The monitor shows whether a server answers from one place; it is not the ping of a player. It never changes
-`servers.json`: a server is removed only by a pull request. The mod does not use the monitor and checks servers
-itself.
+`servers.json`: a server is removed only by a pull request. The mod checks every server itself (ping, status
+endpoint) and uses the monitor only to rank servers: through `status_url` in the list it reads each server's uptime
+over 24 hours and 7 days and moves less stable servers down. A server the monitor cannot reach still works in the
+game when the player's own check reaches it.
 
 ## Server names
 

@@ -21,6 +21,11 @@
         "luxon": { "type": "array", "items": { "type": "string" } }
       }
     },
+    "status_url": {
+      "description": "Optional. HTTPS address of the registry monitor's live document (state and uptime per server id, schema status.json version 1). Readers may use it to rank servers; whether a server is usable is still decided by the reader's own check of its status endpoint.",
+      "type": "string",
+      "pattern": "^https://"
+    },
     "regions": {
       "description": "All regions in display order.",
       "type": "array",
