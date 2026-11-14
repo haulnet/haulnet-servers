@@ -1,0 +1,12 @@
+# Caddy site for the monitor API: HTTPS with an automatic Let's Encrypt certificate.
+# Install as /etc/caddy/Caddyfile. No access log: visitors' addresses are not kept.
+monitor.haulnet.cc {
+	encode gzip
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		-Server
+	}
+	@root path /
+	redir @root https://servers.haulnet.cc/ 302
+	reverse_proxy 127.0.0.1:8080
+}

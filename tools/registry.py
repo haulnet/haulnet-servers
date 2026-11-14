@@ -45,6 +45,8 @@ LUXON_WEB_PORT = 5088  # LuxonServer's own web API: no authentication, must neve
 STATUS_TIMEOUT = 5.0
 STATUS_ATTEMPTS = 2
 STATUS_MAX_BYTES = 64 * 1024
+# Live status for the web page (monitor/haulnet_monitor.py on haulnet-monitor); the page works without it.
+MONITOR_STATUS_URL = "https://monitor.haulnet.cc/v1/status.json"
 
 HOSTNAME_LABEL = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$")
 TLD = re.compile(r"^(?:[a-z]{2,63}|xn--[a-z0-9-]{1,59})$")
@@ -507,24 +509,33 @@ def build_list(locations, supported: list[str], servers: list[Server], commit: s
 
 
 def render_index(listing: dict) -> str:
+    dash = '<td data-col="state">—</td><td data-col="load">—</td><td data-col="version">—</td><td data-col="uptime">—</td>'
     rows = "\n".join(
-        f"<tr><td>{html.escape(s['display_name'])}</td><td><code>{html.escape(s['host'])}:{s['port']}</code></td>"
-        f"<td>{html.escape(s['operator']['name'])}</td></tr>"
+        f'<tr data-id="{html.escape(s["id"])}"><td>{html.escape(s["display_name"])}</td>{dash}'
+        f'<td><code>{html.escape(s["host"])}:{s["port"]}</code></td>'
+        f'<td>{html.escape(s["operator"]["name"])}</td></tr>'
         for s in listing["servers"]
-    ) or '<tr><td colspan="3">No servers yet.</td></tr>'
+    ) or '<tr><td colspan="7">No servers yet.</td></tr>'
     return f"""<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
 <title>Haulnet servers</title>
 <link rel="icon" href="favicon.ico" sizes="32x32">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>
-body {{ font: 15px/1.5 system-ui, sans-serif; max-width: 52rem; margin: 2rem auto; padding: 0 1rem; }}
+:root {{ --ok: #1a7f37; --warn: #9a6700; --bad: #cf222e; --muted: #59636e; }}
+@media (prefers-color-scheme: dark) {{ :root {{ --ok: #3fb950; --warn: #d29922; --bad: #f85149; --muted: #9198a1; }} }}
+body {{ font: 15px/1.5 system-ui, sans-serif; max-width: 64rem; margin: 2rem auto; padding: 0 1rem; }}
+.wrap {{ overflow-x: auto; }}
 table {{ border-collapse: collapse; width: 100%; }}
 th, td {{ text-align: left; padding: .35rem .5rem; border-bottom: 1px solid #8884; }}
+th, td[data-col], td code {{ white-space: nowrap; }}
+#status-note {{ color: var(--muted); font-size: 13px; }}
+.ok {{ color: var(--ok); }} .warn {{ color: var(--warn); }} .bad {{ color: var(--bad); }}
 </style>
 </head>
 <body>
@@ -532,12 +543,16 @@ th, td {{ text-align: left; padding: .35rem .5rem; border-bottom: 1px solid #888
 <p>Machine-readable list: <a href="v1/servers.json">v1/servers.json</a> (schema version {listing['schema_version']}).
 Updated {html.escape(listing['updated_at'])}. Source:
 <a href="https://github.com/haulnet/haulnet-servers">haulnet/haulnet-servers</a>.</p>
-<table>
-<thead><tr><th>Server</th><th>Address</th><th>Operator</th></tr></thead>
+<div class="wrap">
+<table data-status-url="{html.escape(MONITOR_STATUS_URL)}">
+<thead><tr><th>Server</th><th>Status</th><th>Load</th><th>Version</th><th>Uptime (30 days)</th><th>Address</th><th>Operator</th></tr></thead>
 <tbody>
 {rows}
 </tbody>
 </table>
+</div>
+<p id="status-note">Live status needs JavaScript.</p>
+<script src="status.js" defer></script>
 </body>
 </html>
 """
