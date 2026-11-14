@@ -4,6 +4,7 @@
 Usage:
   python3 monitor/haulnet_monitor.py --db PATH [--listen 127.0.0.1:8080] [--list URL]
                                      [--interval 60] [--location TEXT] [--allow-private]
+                                     [--issues OWNER/REPO]   (token in GITHUB_TOKEN; dry run without, see notify.py)
 
 Reads the published server list, asks every server's haulnet-server status endpoint once per interval,
 keeps the results in SQLite and answers over HTTP:
@@ -23,6 +24,7 @@ import http.client
 import ipaddress
 import json
 import logging
+import os
 import re
 import signal
 import socket
@@ -71,6 +73,7 @@ class Target:
     display_name: str
     host: str
     status_port: int
+    operator_github: str | None = None  # account the operator issues mention
 
 
 @dataclass
@@ -104,7 +107,8 @@ def parse_list(data) -> ServerList:
         if port == LUXON_WEB_PORT:
             continue
         seen.add(sid)
-        targets.append(Target(sid, name[:80], host, port))
+        github = (item.get("operator") or {}).get("github") if isinstance(item.get("operator"), dict) else None
+        targets.append(Target(sid, name[:80], host, port, github if isinstance(github, str) else None))
     luxon = (data.get("compatibility") or {}).get("luxon") or []
     compatibility = [v for v in luxon if isinstance(v, str)]
     commit = data.get("source_commit") if isinstance(data.get("source_commit"), str) else None
@@ -308,8 +312,32 @@ class Monitor:
         self.last_round: float | None = None
         self.status_body = b""
         self.history_cache: dict[str, tuple[float, bytes]] = {}
+        self.notifier = None  # notify.Notifier when operator issues are enabled
         self._load()
         self._render()
+
+    def views(self) -> list:
+        """Per-server state for the notifier, after a round."""
+        from notify import ServerView
+        out = []
+        with self.lock:
+            listing = self.server_list
+            for t in (listing.targets if listing else []):
+                state = self.states.get(t.id, ServerState())
+                last = self._last_check(t.id)
+                answer = self._last_answer(t.id)
+                compatible = None if answer is None else answer["luxon"] in listing.compatibility
+                out.append(ServerView(t.id, t.display_name, t.host, t.status_port, t.operator_github, state.state,
+                                      state.since, last[2] if last and not last[1] else None, answer, compatible))
+        return out
+
+    def notify(self) -> None:
+        if self.notifier is None or self.server_list is None:
+            return
+        try:
+            self.notifier.evaluate(self.views(), self.server_list.compatibility)
+        except Exception:  # notifications must never stop the checks
+            log.exception("operator notifications failed")
 
     # Persistence of the last good list and the current states survives restarts.
     def _load(self) -> None:
@@ -559,6 +587,7 @@ def run(monitor: Monitor, stop: threading.Event) -> None:
                 monitor.run_round()
             except Exception:  # keep checking; one broken round must not stop the monitor
                 log.exception("check round failed")
+            monitor.notify()
             next_round = started + monitor.interval
         if now >= next_purge:
             monitor.purge()
@@ -574,6 +603,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--interval", type=float, default=INTERVAL, help="seconds between check rounds")
     parser.add_argument("--location", help="where the monitor runs, shown on the page (e.g. 'Moscow, RU')")
     parser.add_argument("--allow-private", action="store_true", help="local tests only")
+    parser.add_argument("--issues", metavar="OWNER/REPO",
+                        help="open issues for operators in this repository; token from GITHUB_TOKEN, dry run without")
+    parser.add_argument("--github-api", default="https://api.github.com", help=argparse.SUPPRESS)
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s", stream=sys.stderr)
 
@@ -581,6 +613,11 @@ def main(argv: list[str] | None = None) -> int:
     monitor = Monitor(args.db, args.list, max(5.0, args.interval), args.location, args.allow_private)
     if args.allow_private:
         log.warning("--allow-private: private and loopback addresses will be contacted (tests only)")
+    if args.issues:
+        from notify import Notifier
+        token = os.environ.get("GITHUB_TOKEN") or None
+        monitor.notifier = Notifier(args.db, args.issues, token, api=args.github_api, location=args.location)
+        log.info("operator issues in %s%s", args.issues, "" if token else " (dry run: no GITHUB_TOKEN)")
     server = serve(monitor, args.listen)
     log.info("listening on %s, checking every %ds", args.listen, int(monitor.interval))
 

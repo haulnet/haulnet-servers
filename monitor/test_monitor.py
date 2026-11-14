@@ -252,6 +252,19 @@ class MonitorTests(unittest.TestCase):
             server.shutdown()
             server.server_close()
 
+    def test_views_for_the_notifier(self):
+        self.data["servers"][0]["operator"] = {"name": "T", "github": "op-1"}
+        m = self.make()
+        for _ in range(3):
+            m.run_round()
+        views = {v.id: v for v in m.views()}
+        self.assertEqual(views["europe-good-1"].operator_github, "op-1")
+        self.assertEqual(views["europe-good-1"].state, "online")
+        self.assertTrue(views["europe-good-1"].compatible)
+        self.assertEqual(views["europe-down-1"].state, "offline")
+        self.assertEqual(views["europe-down-1"].last_error, "http_503")
+        self.assertIsNone(views["europe-down-1"].answer)
+
     def test_list_refresh_keeps_last_good_copy(self):
         m = hm.Monitor(self.db, list_url="http://127.0.0.1:%d/v1/servers.json" % self.closed, allow_private=True)
         self.monitors.append(m)

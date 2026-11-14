@@ -7,8 +7,11 @@ After=network-online.target
 Wants=network-online.target
 
 [Service]
-ExecStart=/usr/bin/python3 /opt/haulnet-monitor/repo/monitor/haulnet_monitor.py --db /var/lib/haulnet-monitor/monitor.db --listen 127.0.0.1:8080 --location "Moscow, RU"
+ExecStart=/usr/bin/python3 /opt/haulnet-monitor/repo/monitor/haulnet_monitor.py --db /var/lib/haulnet-monitor/monitor.db --listen 127.0.0.1:8080 --location "Moscow, RU" --issues haulnet/haulnet-servers
 Environment=PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+# GITHUB_TOKEN=<fine-grained token: haulnet/haulnet-servers only, Issues read and write>, mode 600, root only.
+# Without the file the monitor runs operator issues as a dry run (log only).
+EnvironmentFile=-/etc/haulnet-monitor/github.env
 DynamicUser=yes
 StateDirectory=haulnet-monitor
 Restart=always
