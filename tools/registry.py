@@ -45,7 +45,8 @@ LUXON_WEB_PORT = 5088  # LuxonServer's own web API: no authentication, must neve
 STATUS_TIMEOUT = 5.0
 STATUS_ATTEMPTS = 2
 STATUS_MAX_BYTES = 64 * 1024
-# Live status for the web page (monitor/haulnet_monitor.py on haulnet-monitor); the page works without it.
+# Live status (monitor/haulnet_monitor.py on haulnet-monitor) for the web page and, as `status_url` in the list,
+# for the mod's server ranking; both work without it.
 MONITOR_STATUS_URL = "https://monitor.haulnet.cc/v1/status.json"
 
 HOSTNAME_LABEL = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$")
@@ -502,6 +503,7 @@ def build_list(locations, supported: list[str], servers: list[Server], commit: s
         "updated_at": updated_at,
         "source_commit": commit,
         "compatibility": {"luxon": list(supported)},
+        "status_url": MONITOR_STATUS_URL,
         "regions": [{"id": r["id"], "name": r["name"]} for r in regions.values()],
         "cities": [city_entry(c) for c in used],
         "servers": [server_entry(s) for s in servers],
