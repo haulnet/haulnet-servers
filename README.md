@@ -47,6 +47,21 @@ After every merge to `main`, CI publishes the list to GitHub Pages at `servers.h
 - Version 1 may gain new optional fields; readers must ignore fields they do not know. A change that would
   break existing readers is published under a new path (`/v2/`) while `/v1/` keeps being updated.
 
+## Live status
+
+The page `https://servers.haulnet.cc/` also shows whether each server answers, its load, version and uptime.
+The data comes from the Haulnet registry monitor ([`monitor/`](monitor/)), which asks every listed server's
+status endpoint once a minute from Moscow over IPv4 and keeps the results for 90 days:
+
+| URL | Contents |
+|---|---|
+| `https://monitor.haulnet.cc/v1/status.json` | state (`online`, `offline` after 3 failed checks in a row, `pending`), versions, rooms and players, uptime for 24 hours, 7 and 30 days |
+| `https://monitor.haulnet.cc/v1/history/<id>.json` | daily totals of one server for the last 30 days |
+
+The monitor shows whether a server answers from one place; it is not the ping of a player. It never changes
+`servers.json`: a server is removed only by a pull request. The mod does not use the monitor and checks servers
+itself.
+
 ## Server names
 
 Every server is named `<Region> [<City>] #<N>`, for example `Europe [Moscow] #1` or `Asia [Tokyo] #2`.

@@ -1,0 +1,38 @@
+# systemd unit for the Haulnet registry monitor. Install:
+#   cp monitor/deploy/haulnet-monitor.service /etc/systemd/system/ && systemctl enable --now haulnet-monitor
+# The code runs from a clone of this repository in /opt/haulnet-monitor/repo.
+[Unit]
+Description=Haulnet registry monitor
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+ExecStart=/usr/bin/python3 /opt/haulnet-monitor/repo/monitor/haulnet_monitor.py --db /var/lib/haulnet-monitor/monitor.db --listen 127.0.0.1:8080 --location "Moscow, RU"
+Environment=PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+DynamicUser=yes
+StateDirectory=haulnet-monitor
+Restart=always
+RestartSec=5
+MemoryMax=200M
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+SystemCallArchitectures=native
+CapabilityBoundingSet=
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target
