@@ -1,0 +1,12 @@
+{
+  "$schema": "../../schema/server.schema.json",
+  "city": "moscow",
+  "number": 1,
+  "host": "moscow-1.play.haulnet.cc",
+  "port": 27000,
+  "operator": {
+    "name": "Haulnet",
+    "github": "haulnet",
+    "contact": "https://haulnet.cc/"
+  }
+}
