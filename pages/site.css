@@ -211,11 +211,12 @@ main { display: block; }
 /* Hero */
 .hero { position: relative; padding: var(--s7) 0 var(--s6); overflow: clip; }
 .hero::before {
-  /* Dotted map grid, faded towards the edges. */
+  /* Dotted map grid across the full width, centred on the page so both sides match; it fades out towards the header
+     and towards the live numbers below, never at the sides. */
   content: ""; position: absolute; inset: -40px 0 0; z-index: -1; pointer-events: none;
-  background: radial-gradient(var(--grid-dot) 1.4px, transparent 1.6px) 0 0 / 24px 24px;
-  -webkit-mask-image: radial-gradient(ellipse 70% 80% at 70% 40%, #000 30%, transparent 75%);
-          mask-image: radial-gradient(ellipse 70% 80% at 70% 40%, #000 30%, transparent 75%);
+  background: radial-gradient(var(--grid-dot) 1.4px, transparent 1.6px) 50% 0 / 24px 24px;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 22%, #000 68%, transparent 100%);
+          mask-image: linear-gradient(to bottom, transparent 0, #000 22%, #000 68%, transparent 100%);
 }
 .hero .wrap { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: var(--s7); align-items: center; }
 .hero h1 { max-width: 12em; }
