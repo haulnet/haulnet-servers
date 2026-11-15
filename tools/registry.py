@@ -559,9 +559,10 @@ def render_index(listing: dict) -> str:
     community = [s for s in listing["servers"] if not is_official(s)]
     official_html = board(official, "Official servers") if official else '<p class="empty">No official servers right now.</p>'
     community_html = board(community, "Community servers") if community else (
-        '<div class="empty card"><p>No community servers yet. Anyone can run one with the haulnet-server package and '
-        'add it with one pull request.</p><p class="actions"><a class="button ghost" '
-        'href="https://haulnet.cc/docs/server/">Run a server <span class="arrow" aria-hidden="true">→</span></a></p></div>')
+        '<div class="empty card"><p>No community servers yet. A listed server is open to every Haulnet player, so its '
+        'operator keeps it online around the clock. A server only for you and your friends needs no listing: share its '
+        'address.</p><p class="actions"><a class="button ghost" href="https://haulnet.cc/docs/server/#private-or-public">'
+        'Private or public? <span class="arrow" aria-hidden="true">→</span></a></p></div>')
     logo = LOGO.read_text(encoding="utf-8").strip()
     nav = "\n".join(
         f'      <a href="{href}">{label}</a>' if href else f'      <a href="./" aria-current="page">{label}</a>'
@@ -629,7 +630,8 @@ def render_index(listing: dict) -> str:
   <section class="group" id="community" aria-labelledby="community-title">
     <div class="group-head">
       <h2 id="community-title">Community servers</h2>
-      <p>Run by players and communities on their own machines. Each operator is named here and follows the
+      <p>Public servers run by players and communities. Their operators keep them online around the clock and
+        updated, answer reports and follow the
         <a href="https://github.com/haulnet/haulnet-servers#rules-for-operators">rules of the list</a>.</p>
     </div>
   {community_html}
