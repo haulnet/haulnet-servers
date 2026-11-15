@@ -309,6 +309,11 @@ main { display: block; }
 }
 @keyframes ping-soft { 50% { transform: scale(1.25); } }
 
+/* Who it's for: three numbered cards. */
+.who .card { display: flex; flex-direction: column; }
+.who .card p.small { margin-top: auto; padding-top: var(--s3); }
+.who-num { margin: 0 0 var(--s3); font: 700 14px/1 var(--mono); letter-spacing: .08em; color: var(--accent-text); }
+
 /* Steps on a route: numbered nodes joined by a line. */
 .steps { list-style: none; padding: 0; margin: 0 0 var(--s5); counter-reset: step; }
 .steps li { position: relative; padding: 0 0 var(--s5) 48px; margin: 0; counter-increment: step; }
