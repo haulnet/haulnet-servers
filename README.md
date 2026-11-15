@@ -136,6 +136,9 @@ internet: UDP 27000–27002 for players and TCP 27080 (the status endpoint) for 
 - `host` is a valid DNS name or public IP address (no private, loopback, CGNAT, documentation or reserved
   ranges and names), and `host` + `port` is not listed twice;
 - DNS names resolve to public addresses, and no two entries point at the same address and port;
+- official servers are the Haulnet project's: `operator.github` `haulnet` and a host `<city>-<N>.play.haulnet.cc`
+  always go together, so no other entry can use either; servers.haulnet.cc lists official servers apart from
+  community ones;
 - for every added or changed entry: `GET http://<host>:<status_port>/status` answers within 5 seconds like
   `haulnet-server` does, and its `luxon` version is listed in [`data/compatibility.json`](data/compatibility.json).
   Bring the server up before you open the pull request.
