@@ -514,7 +514,7 @@ def render_index(listing: dict) -> str:
     dash = '<td data-col="state">—</td><td data-col="load">—</td><td data-col="version">—</td><td data-col="uptime">—</td>'
     dash += '<td data-col="history">—</td>'
     rows = "\n".join(
-        f'<tr data-id="{html.escape(s["id"])}"><td>{html.escape(s["display_name"])}</td>{dash}'
+        f'<tr data-id="{html.escape(s["id"])}"><th scope="row">{html.escape(s["display_name"])}</th>{dash}'
         f'<td><code>{html.escape(s["host"])}:{s["port"]}</code></td>'
         f'<td>{html.escape(s["operator"]["name"])}</td></tr>'
         for s in listing["servers"]
@@ -530,13 +530,21 @@ def render_index(listing: dict) -> str:
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>
-:root {{ --ok: #1a7f37; --warn: #9a6700; --bad: #cf222e; --muted: #59636e; }}
+:root {{ --ok: #1a7f37; --warn: #9a6700; --bad: #cf222e; --muted: #59636e; --accent: #e5484d; }}
 @media (prefers-color-scheme: dark) {{ :root {{ --ok: #3fb950; --warn: #d29922; --bad: #f85149; --muted: #9198a1; }} }}
-body {{ font: 15px/1.5 system-ui, sans-serif; max-width: 64rem; margin: 2rem auto; padding: 0 1rem; }}
+html {{ background: Canvas; color: CanvasText; }}
+body {{ font: 15px/1.5 system-ui, sans-serif; max-width: 80rem; margin: 2rem auto; padding: 0 1rem; }}
+header {{ display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem 1rem; margin-bottom: 1rem; }}
+h1 {{ margin: 0; line-height: 1.2; }}
+.button {{ display: inline-block; padding: .4rem .9rem; border: 2px solid currentColor; border-radius: 10px; font-weight: 600;
+  color: inherit; text-decoration: none; white-space: nowrap; }}
+.button:hover, .button:focus-visible {{ color: var(--accent); }}
 .wrap {{ overflow-x: auto; }}
 table {{ border-collapse: collapse; width: 100%; }}
-th, td {{ text-align: left; padding: .35rem .5rem; border-bottom: 1px solid #8884; }}
-th, td[data-col], td code {{ white-space: nowrap; }}
+th, td {{ text-align: left; padding: .35rem .5rem; border-bottom: 1px solid #8884; white-space: nowrap; }}
+tbody th {{ font-weight: normal; }}
+/* The server name stays in view while a narrow screen scrolls the table sideways. */
+tr > :first-child {{ position: sticky; left: 0; background: Canvas; }}
 #status-note {{ color: var(--muted); font-size: 13px; }}
 .ok {{ color: var(--ok); }} .warn {{ color: var(--warn); }} .bad {{ color: var(--bad); }}
 .bars {{ display: block; width: 150px; height: 18px; }}
@@ -545,7 +553,10 @@ th, td[data-col], td code {{ white-space: nowrap; }}
 </style>
 </head>
 <body>
+<header>
 <h1>Haulnet community servers</h1>
+<a class="button" href="https://haulnet.cc/">Haulnet home page</a>
+</header>
 <p>Machine-readable list: <a href="v1/servers.json">v1/servers.json</a> (schema version {listing['schema_version']}).
 Updated {html.escape(listing['updated_at'])}. Source:
 <a href="https://github.com/haulnet/haulnet-servers">haulnet/haulnet-servers</a>.</p>
