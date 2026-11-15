@@ -620,7 +620,7 @@ def render_index(listing: dict) -> str:
 
   <section class="group" id="official" aria-labelledby="official-title">
     <div class="group-head">
-      <h2 id="official-title"><span class="tag">Official</span> Haulnet servers</h2>
+      <h2 id="official-title">Official servers <span class="tag">Haulnet</span></h2>
       <p>Run by the Haulnet project on its own machines and updated automatically.</p>
     </div>
   {official_html}
