@@ -510,66 +510,131 @@ def build_list(locations, supported: list[str], servers: list[Server], commit: s
     }
 
 
+PAGE_NAV = (("Docs", "https://haulnet.cc/docs/"), ("Servers", None),
+            ("Run a server", "https://haulnet.cc/docs/server/"), ("GitHub", "https://github.com/haulnet"))
+# The page shares the look of haulnet.cc: pages/site.css and tools/logo.svg are copies of the site's style.css and
+# _partials/logo.svg (haulnet/haulnet.github.io); pages/status.css holds the rules of this page only.
+LOGO = ROOT / "tools" / "logo.svg"
+
+
 def render_index(listing: dict) -> str:
-    dash = '<td data-col="state">—</td><td data-col="load">—</td><td data-col="version">—</td><td data-col="uptime">—</td>'
-    dash += '<td data-col="history">—</td>'
+    labels = ("Status", "Load", "Version", "Uptime (30 days)", "Last 30 days")
+    cols = ("state", "load", "version", "uptime", "history")
+    dash = "".join(f'<td data-col="{c}" data-label="{l}">—</td>' for c, l in zip(cols, labels))
     rows = "\n".join(
-        f'<tr data-id="{html.escape(s["id"])}"><th scope="row">{html.escape(s["display_name"])}</th>{dash}'
-        f'<td><code>{html.escape(s["host"])}:{s["port"]}</code></td>'
-        f'<td>{html.escape(s["operator"]["name"])}</td></tr>'
+        f'<tr data-id="{html.escape(s["id"])}"><th scope="row">{html.escape(s["display_name"])}'
+        f'<code class="addr">{html.escape(s["host"])}:{s["port"]}</code></th>{dash}'
+        f'<td data-label="Operator">{html.escape(s["operator"]["name"])}</td></tr>'
         for s in listing["servers"]
-    ) or '<tr><td colspan="8">No servers yet.</td></tr>'
+    ) or '<tr><td colspan="7">No servers yet.</td></tr>'
+    logo = LOGO.read_text(encoding="utf-8").strip()
+    nav = "\n".join(
+        f'      <a href="{href}">{label}</a>' if href else f'      <a href="./" aria-current="page">{label}</a>'
+        for label, href in PAGE_NAV)
+    cities = len(listing["cities"])
+    count = len(listing["servers"])
     return f"""<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
-<title>Haulnet servers</title>
+<title>Haulnet servers: live status of R.E.P.O. community servers</title>
+<meta name="description" content="Live status of the community and official Haulnet servers for R.E.P.O.: {count} server(s) in {cities} city(ies), load, version and uptime, checked every minute.">
+<link rel="canonical" href="https://servers.haulnet.cc/">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://servers.haulnet.cc/">
+<meta property="og:title" content="Haulnet servers">
+<meta property="og:description" content="Live status of the community and official Haulnet servers for R.E.P.O.">
+<meta property="og:image" content="https://haulnet.cc/assets/social-preview.png">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="favicon.ico" sizes="32x32">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<style>
-:root {{ --ok: #1a7f37; --warn: #9a6700; --bad: #cf222e; --muted: #59636e; --accent: #e5484d; }}
-@media (prefers-color-scheme: dark) {{ :root {{ --ok: #3fb950; --warn: #d29922; --bad: #f85149; --muted: #9198a1; }} }}
-html {{ background: Canvas; color: CanvasText; }}
-body {{ font: 15px/1.5 system-ui, sans-serif; max-width: 80rem; margin: 2rem auto; padding: 0 1rem; }}
-header {{ display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem 1rem; margin-bottom: 1rem; }}
-h1 {{ margin: 0; line-height: 1.2; }}
-.button {{ display: inline-block; padding: .4rem .9rem; border: 2px solid currentColor; border-radius: 10px; font-weight: 600;
-  color: inherit; text-decoration: none; white-space: nowrap; }}
-.button:hover, .button:focus-visible {{ color: var(--accent); }}
-.wrap {{ overflow-x: auto; }}
-table {{ border-collapse: collapse; width: 100%; }}
-th, td {{ text-align: left; padding: .35rem .5rem; border-bottom: 1px solid #8884; white-space: nowrap; }}
-tbody th {{ font-weight: normal; }}
-/* The server name stays in view while a narrow screen scrolls the table sideways. */
-tr > :first-child {{ position: sticky; left: 0; background: Canvas; }}
-#status-note {{ color: var(--muted); font-size: 13px; }}
-.ok {{ color: var(--ok); }} .warn {{ color: var(--warn); }} .bad {{ color: var(--bad); }}
-.bars {{ display: block; width: 150px; height: 18px; }}
-.bars .ok {{ fill: var(--ok); }} .bars .warn {{ fill: var(--warn); }} .bars .bad {{ fill: var(--bad); }}
-.bars .none {{ fill: var(--muted); opacity: .45; }}
-</style>
+<link rel="stylesheet" href="site.css">
+<link rel="stylesheet" href="status.css">
+<script src="status.js" defer></script>
 </head>
 <body>
-<header>
-<h1>Haulnet community servers</h1>
-<a class="button" href="https://haulnet.cc/">Haulnet home page</a>
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="https://haulnet.cc/" aria-label="Haulnet home">{logo}</a>
+    <nav aria-label="Main">
+{nav}
+    </nav>
+  </div>
 </header>
-<p>Machine-readable list: <a href="v1/servers.json">v1/servers.json</a> (schema version {listing['schema_version']}).
-Updated {html.escape(listing['updated_at'])}. Source:
-<a href="https://github.com/haulnet/haulnet-servers">haulnet/haulnet-servers</a>.</p>
-<div class="wrap">
-<table data-status-url="{html.escape(MONITOR_STATUS_URL)}">
-<thead><tr><th>Server</th><th>Status</th><th>Load</th><th>Version</th><th>Uptime (30 days)</th><th>Last 30 days</th><th>Address</th><th>Operator</th></tr></thead>
-<tbody>
+
+<main class="wrap">
+  <section class="page-head">
+    <p class="eyebrow">Server list</p>
+    <h1>Haulnet servers</h1>
+    <p class="lead">Community and official servers for R.E.P.O. with Haulnet. In the game they appear as one row per
+      city on the region page; Haulnet picks a working, compatible server of that city for you.</p>
+    <p class="pill"><span class="dot idle" id="status-dot" aria-hidden="true"></span><span id="status-note">Live status needs JavaScript.</span></p>
+  </section>
+
+  <section aria-label="Network right now">
+    <dl class="stats" id="summary">
+      <div><dt>servers online</dt><dd data-sum="servers">—</dd></div>
+      <div><dt>cities</dt><dd data-sum="cities">{cities}</dd></div>
+      <div><dt>players right now</dt><dd data-sum="players">—</dd></div>
+      <div><dt>games right now</dt><dd data-sum="games">—</dd></div>
+    </dl>
+  </section>
+
+  <div class="board">
+    <table data-status-url="{html.escape(MONITOR_STATUS_URL)}">
+      <thead><tr><th scope="col">Server</th><th scope="col">Status</th><th scope="col">Load</th><th scope="col">Version</th><th scope="col">Uptime (30 days)</th><th scope="col">Last 30 days</th><th scope="col">Operator</th></tr></thead>
+      <tbody>
 {rows}
-</tbody>
-</table>
-</div>
-<p id="status-note">Live status needs JavaScript.</p>
-<script src="status.js" defer></script>
+      </tbody>
+    </table>
+  </div>
+
+  <section class="section-sm" id="legend" aria-labelledby="legend-title">
+    <h2 id="legend-title">What the status means</h2>
+    <dl class="legend">
+      <div><dt><span class="state ok"><span class="dot" aria-hidden="true"></span>Online</span></dt><dd>Answers its status check and takes new games.</dd></div>
+      <div><dt><span class="state warn"><span class="dot idle" aria-hidden="true"></span>Full</span></dt><dd>Reached its operator's limits; running games go on.</dd></div>
+      <div><dt><span class="state warn"><span class="dot idle" aria-hidden="true"></span>Updating</span></dt><dd>Waits for its games to end, then installs an update.</dd></div>
+      <div><dt><span class="state warn"><span class="dot idle" aria-hidden="true"></span>Incompatible</span></dt><dd>Runs a server version the current game does not work with; Haulnet does not choose it for its city.</dd></div>
+      <div><dt><span class="state bad"><span class="dot idle" aria-hidden="true"></span>Offline</span></dt><dd>No answer to several checks in a row; the time shows for how long.</dd></div>
+    </dl>
+    <p class="small">You never need to type these addresses: in the game every city is one row on the region page, and
+      Haulnet picks a server there for you.</p>
+  </section>
+
+  <div class="cards two below">
+    <article class="card">
+      <h3><a href="https://haulnet.cc/docs/server/">Run your own server</a></h3>
+      <p>The haulnet-server package runs on a Linux VPS or a Windows PC. Keep it private and share the address, or
+        add it to this list: <a href="https://github.com/haulnet/haulnet-servers#adding-a-server">how to add a
+        server</a>.</p>
+    </article>
+    <article class="card">
+      <h3>Problems and data</h3>
+      <p>Something wrong with a server? <a href="https://github.com/haulnet/haulnet-servers/issues/new/choose">Report
+        it</a>. Machine-readable list: <a href="v1/servers.json">v1/servers.json</a> (schema version
+        {listing['schema_version']}); list updated {html.escape(listing['updated_at'])}. Source and rules:
+        <a href="https://github.com/haulnet/haulnet-servers">haulnet/haulnet-servers</a>.</p>
+    </article>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="footer-notes">
+      <p>This page sets no cookies and has no analytics. Its only script reads the live status from our own server
+        monitor (<code>monitor.haulnet.cc</code>), which keeps no access log. Hosted on GitHub Pages, so GitHub's
+        <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">privacy statement</a>
+        covers its server logs.</p>
+      <p>Haulnet is an independent fan project. It is not affiliated with or endorsed by semiwork (developers of
+        R.E.P.O.) or Exit Games GmbH. "R.E.P.O." and "Photon" are trademarks of their respective owners and are used
+        only to describe compatibility.</p>
+    </div>
+  </div>
+</footer>
 </body>
 </html>
 """
