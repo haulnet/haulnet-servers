@@ -72,11 +72,10 @@
       }
       set(row, "uptime", percent(s.uptime["30d"]), "", `24 h: ${percent(s.uptime["24h"])} · 7 days: ${percent(s.uptime["7d"])}`);
     }
-    const where = doc.monitor.location ? ` in ${doc.monitor.location}` : "";
     const age = (now - Date.parse(doc.generated_at)) / 1000;
     note.textContent = age > STALE_S
       ? `Live status is out of date: the monitor's last check was ${ago(doc.generated_at, now)} ago.`
-      : `Live status from the Haulnet monitor${where} (${doc.monitor.address_family}), checked every ` +
+      : `Live status from the Haulnet monitor (${doc.monitor.address_family}), checked every ` +
         `${doc.monitor.interval_s < 60 ? `${doc.monitor.interval_s} s` : `${Math.round(doc.monitor.interval_s / 60)} min`}; ` +
         `last check ${ago(doc.generated_at, now)} ago. ` +
         `It shows whether a server answers, not your ping: the game measures that itself.`;
