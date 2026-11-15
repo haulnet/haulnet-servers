@@ -1,8 +1,11 @@
-// Fills the live columns of the server table from the Haulnet registry monitor (ADR: the page stays static;
+// Fills the live columns of the server tables (official and community) from the Haulnet registry monitor (ADR: the page stays static;
 // without the monitor it still lists every server). No libraries, no third-party requests.
 (() => {
   "use strict";
-  const table = document.querySelector("table[data-status-url]");
+  const tables = [...document.querySelectorAll("table[data-status-url]")];
+  const table = tables[0];
+  // Every server row of every table; the page groups servers, the monitor does not.
+  const allRows = () => tables.flatMap((t) => [...t.tBodies[0].rows]);
   const note = document.getElementById("status-note");
   const dot = document.getElementById("status-dot");
   const sum = (name, text) => {
@@ -55,7 +58,7 @@
 
   const clear = () => {
     historyLoaded = 0;
-    for (const row of table.tBodies[0].rows) {
+    for (const row of allRows()) {
       if (!row.dataset.id) continue;
       for (const col of ["state", "load", "version", "uptime", "history"]) set(row, col, "—");
     }
@@ -66,7 +69,7 @@
   const render = (doc) => {
     const now = Date.now();
     const byId = new Map(doc.servers.map((s) => [s.id, s]));
-    for (const row of table.tBodies[0].rows) {
+    for (const row of allRows()) {
       const s = byId.get(row.dataset.id);
       if (!s) continue;
       const st = s.status;
@@ -160,7 +163,7 @@
     const now = Date.now();
     if (now - historyLoaded < HISTORY_MS) return;
     historyLoaded = now;
-    for (const row of table.tBodies[0].rows) {
+    for (const row of allRows()) {
       const cell = row.querySelector('[data-col="history"]');
       if (!cell || !servers.some((s) => s.id === row.dataset.id)) continue;
       fetch(historyUrl(row.dataset.id))
