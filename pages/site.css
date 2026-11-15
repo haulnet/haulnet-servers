@@ -381,6 +381,18 @@ main { display: block; }
 .faq dd { margin: var(--s2) 0 0; padding: var(--s1) 0 var(--s1) var(--s4); border-left: 3px solid var(--line); }
 .faq dd p { margin: 0 0 var(--s2); }
 .faq dd ul { margin: 0 0 var(--s2); }
+/* A message as the game shows it: quoted from the mod's own text table. */
+.faq dt[id] { scroll-margin-top: 96px; }
+.msg {
+  margin: 0 0 var(--s3); padding: var(--s3) var(--s4); border-radius: var(--r1); background: var(--surface);
+  border: 1px solid var(--line); border-left: 3px solid var(--accent); font-size: 15.5px;
+}
+.msg + .msg { margin-top: calc(-1 * var(--s2)); }
+.msg-alt { margin: 0 0 var(--s2); font-size: 13.5px; color: var(--muted); }
+.msg-alt b { color: var(--fg); font-weight: 600; }
+.msg-list { margin: 0 0 var(--s3); padding: var(--s2) var(--s4) var(--s2) 2.2em; border-radius: var(--r1);
+            background: var(--surface); border: 1px solid var(--line); font-size: 15px; }
+.msg-list li + li { margin-top: var(--s1); }
 .edit { margin-top: var(--s8); padding-top: var(--s4); border-top: 1px solid var(--line); }
 
 /* ---------------------------------------------------------------- 404 */
@@ -395,7 +407,8 @@ main { display: block; }
   .hero-art { order: -1; max-width: 340px; justify-self: start; }
   .footer-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .footer-brand { grid-column: 1 / -1; }
-  .docs { grid-template-columns: 1fr; gap: var(--s5); padding-top: var(--s4); }
+  .docs { grid-template-columns: minmax(0, 1fr); gap: var(--s5); padding-top: var(--s4); }
+  .docs-nav { min-width: 0; }
   .docs-nav ul { position: static; display: flex; gap: var(--s2); overflow-x: auto; padding-bottom: var(--s2); scrollbar-width: thin; }
   .docs-nav li { padding: 0; flex: none; }
   .docs-nav li::before, .docs-nav li::after { display: none; }
@@ -420,4 +433,9 @@ main { display: block; }
   .footer-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .site-footer { margin-top: var(--s8); }
   pre { padding: var(--s3) var(--s4); font-size: 13px; }
+}
+
+@media print {
+  .reveal, .hero-art * { animation: none !important; }
+  .top, .site-footer nav, .actions { display: none; }
 }
