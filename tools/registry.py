@@ -48,6 +48,10 @@ STATUS_MAX_BYTES = 64 * 1024
 # Live status (monitor/haulnet_monitor.py on haulnet-monitor) for the web page and, as `status_url` in the list,
 # for the mod's server ranking; both work without it.
 MONITOR_STATUS_URL = "https://monitor.haulnet.cc/v1/status.json"
+# Official servers are run by the Haulnet project: operator account `haulnet` and a name under play.haulnet.cc, always
+# both (ADR 0017 point 6). The page lists them apart from community servers; the published list does not change.
+OFFICIAL_GITHUB = "haulnet"
+OFFICIAL_DOMAIN = "play.haulnet.cc"
 
 HOSTNAME_LABEL = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$")
 TLD = re.compile(r"^(?:[a-z]{2,63}|xn--[a-z0-9-]{1,59})$")
@@ -293,6 +297,21 @@ def check_numbers(servers: list[Server], report: Report) -> None:
                                      f"(rename the file to servers/{s.region}/{s.data['city']}-{expected}.json and set \"number\": {expected})")
 
 
+def is_official(data: dict) -> bool:
+    return data["operator"]["github"].lower() == OFFICIAL_GITHUB
+
+
+def check_official(server: Server, report: Report) -> None:
+    host = server.data["host"]
+    project_host = host == "haulnet.cc" or host.endswith(".haulnet.cc")
+    if is_official(server.data) and not host.endswith("." + OFFICIAL_DOMAIN):
+        report.error(server.path, f"operator.github '{OFFICIAL_GITHUB}' marks an official server, whose host must be "
+                                  f"<city>-<N>.{OFFICIAL_DOMAIN}")
+    elif project_host and not is_official(server.data):
+        report.error(server.path, f"host '{host}' belongs to the Haulnet project; only operator.github "
+                                  f"'{OFFICIAL_GITHUB}' may list it")
+
+
 def load_servers(locations, report: Report, base: str | None) -> list[Server]:
     regions, cities = locations
     validator = schema_validator("server.schema.json")
@@ -344,6 +363,7 @@ def load_servers(locations, report: Report, base: str | None) -> list[Server]:
             report.error(path, f"status_port {LUXON_WEB_PORT} is LuxonServer's own web API, which must never be public; "
                                f"use the haulnet-server status endpoint (default {DEFAULT_STATUS_PORT})")
         check_host(server, report)
+        check_official(server, report)
         servers.append(server)
 
     seen: dict[tuple[str, int], Server] = {}
@@ -521,12 +541,27 @@ def render_index(listing: dict) -> str:
     labels = ("Status", "Load", "Version", "Uptime (30 days)", "Last 30 days")
     cols = ("state", "load", "version", "uptime", "history")
     dash = "".join(f'<td data-col="{c}" data-label="{l}">—</td>' for c, l in zip(cols, labels))
-    rows = "\n".join(
-        f'<tr data-id="{html.escape(s["id"])}"><th scope="row">{html.escape(s["display_name"])}'
-        f'<code class="addr">{html.escape(s["host"])}:{s["port"]}</code></th>{dash}'
-        f'<td data-label="Operator">{html.escape(s["operator"]["name"])}</td></tr>'
-        for s in listing["servers"]
-    ) or '<tr><td colspan="7">No servers yet.</td></tr>'
+    def rows(servers: list[dict]) -> str:
+        return "\n".join(
+            f'<tr data-id="{html.escape(s["id"])}"><th scope="row">{html.escape(s["display_name"])}'
+            f'<code class="addr">{html.escape(s["host"])}:{s["port"]}</code></th>{dash}'
+            f'<td data-label="Operator">{html.escape(s["operator"]["name"])}</td></tr>'
+            for s in servers)
+
+    def board(servers: list[dict], label: str) -> str:
+        head = ('<thead><tr><th scope="col">Server</th><th scope="col">Status</th><th scope="col">Load</th>'
+                '<th scope="col">Version</th><th scope="col">Uptime (30 days)</th><th scope="col">Last 30 days</th>'
+                '<th scope="col">Operator</th></tr></thead>')
+        return (f'<div class="board">\n    <table data-status-url="{html.escape(MONITOR_STATUS_URL)}" aria-label="{label}">\n'
+                f'      {head}\n      <tbody>\n{rows(servers)}\n      </tbody>\n    </table>\n  </div>')
+
+    official = [s for s in listing["servers"] if is_official(s)]
+    community = [s for s in listing["servers"] if not is_official(s)]
+    official_html = board(official, "Official servers") if official else '<p class="empty">No official servers right now.</p>'
+    community_html = board(community, "Community servers") if community else (
+        '<div class="empty card"><p>No community servers yet. Anyone can run one with the haulnet-server package and '
+        'add it with one pull request.</p><p class="actions"><a class="button ghost" '
+        'href="https://haulnet.cc/docs/server/">Run a server <span class="arrow" aria-hidden="true">→</span></a></p></div>')
     logo = LOGO.read_text(encoding="utf-8").strip()
     nav = "\n".join(
         f'      <a href="{href}">{label}</a>' if href else f'      <a href="./" aria-current="page">{label}</a>'
@@ -539,13 +574,13 @@ def render_index(listing: dict) -> str:
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
-<title>Haulnet servers: live status of R.E.P.O. community servers</title>
-<meta name="description" content="Live status of the community and official Haulnet servers for R.E.P.O.: {count} server(s) in {cities} city(ies), load, version and uptime, checked every minute.">
+<title>Haulnet servers: live status of official and community R.E.P.O. servers</title>
+<meta name="description" content="Live status of the official and community Haulnet servers for R.E.P.O.: {count} server(s) in {cities} city(ies), load, version and uptime, checked every minute.">
 <link rel="canonical" href="https://servers.haulnet.cc/">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://servers.haulnet.cc/">
 <meta property="og:title" content="Haulnet servers">
-<meta property="og:description" content="Live status of the community and official Haulnet servers for R.E.P.O.">
+<meta property="og:description" content="Live status of the official and community Haulnet servers for R.E.P.O.">
 <meta property="og:image" content="https://haulnet.cc/assets/social-preview.png">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="favicon.ico" sizes="32x32">
@@ -569,7 +604,7 @@ def render_index(listing: dict) -> str:
   <section class="page-head">
     <p class="eyebrow">Server list</p>
     <h1>Haulnet servers</h1>
-    <p class="lead">Community and official servers for R.E.P.O. with Haulnet. In the game they appear as one row per
+    <p class="lead">Official and community servers for R.E.P.O. with Haulnet. In the game they appear as one row per
       city on the region page; Haulnet picks a working, compatible server of that city for you.</p>
     <p class="pill"><span class="dot idle" id="status-dot" aria-hidden="true"></span><span id="status-note">Live status needs JavaScript.</span></p>
   </section>
@@ -583,14 +618,22 @@ def render_index(listing: dict) -> str:
     </dl>
   </section>
 
-  <div class="board">
-    <table data-status-url="{html.escape(MONITOR_STATUS_URL)}">
-      <thead><tr><th scope="col">Server</th><th scope="col">Status</th><th scope="col">Load</th><th scope="col">Version</th><th scope="col">Uptime (30 days)</th><th scope="col">Last 30 days</th><th scope="col">Operator</th></tr></thead>
-      <tbody>
-{rows}
-      </tbody>
-    </table>
-  </div>
+  <section class="group" id="official" aria-labelledby="official-title">
+    <div class="group-head">
+      <h2 id="official-title">Official servers <span class="tag">Haulnet</span></h2>
+      <p>Run by the Haulnet project on its own machines and updated automatically.</p>
+    </div>
+  {official_html}
+  </section>
+
+  <section class="group" id="community" aria-labelledby="community-title">
+    <div class="group-head">
+      <h2 id="community-title">Community servers</h2>
+      <p>Run by players and communities on their own machines. Each operator is named here and follows the
+        <a href="https://github.com/haulnet/haulnet-servers#rules-for-operators">rules of the list</a>.</p>
+    </div>
+  {community_html}
+  </section>
 
   <section class="section-sm" id="legend" aria-labelledby="legend-title">
     <h2 id="legend-title">What the status means</h2>
