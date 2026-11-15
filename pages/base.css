@@ -1,6 +1,8 @@
-/* haulnet.cc. One stylesheet for the home page, /docs/ and 404. Concept "route map": the brand mark's geometry
-   (route stroke, round nodes, coral crate) is the design language. System fonts only (ADR 0017, ADR 0023).
-   Motion is CSS/SVG only and runs only under prefers-reduced-motion: no-preference. */
+/* Shared look of haulnet.cc and servers.haulnet.cc ("route map": the brand mark's routes, nodes and coral crate
+   as the design language): tokens, light and dark theme, type, header with the moving logo, buttons, pills, live
+   dot, badges, number tiles, cards and footer. System fonts only (ADR 0017, ADR 0023). Motion runs only under
+   prefers-reduced-motion: no-preference. Source: haulnet/haulnet.github.io base.css; haulnet-servers keeps an
+   identical copy in pages/base.css. Rules for one site only go into that site's own stylesheet. */
 
 :root {
   --ink: #121820;
@@ -201,76 +203,8 @@ pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
 .badge span { background: var(--surface-2); color: var(--muted); padding: 0 10px; margin-right: 10px; border-right: 1px solid var(--line); }
 a.badge:hover { border-color: var(--accent); color: var(--fg); }
 
-/* ---------------------------------------------------------------- sections */
+/* ---------------------------------------------------------------- number tiles */
 
-main { display: block; }
-.section { padding-top: var(--s8); }
-.section-head { max-width: 46em; margin-bottom: var(--s6); }
-.section-head p { color: var(--muted); }
-
-/* Hero */
-.hero { position: relative; padding: var(--s7) 0 var(--s6); overflow: clip; }
-.hero::before {
-  /* Dotted map grid across the full width, centred on the page so both sides match; it fades out towards the header
-     and towards the live numbers below, never at the sides. */
-  content: ""; position: absolute; inset: -40px 0 0; z-index: -1; pointer-events: none;
-  background: radial-gradient(var(--grid-dot) 1.4px, transparent 1.6px) 50% 0 / 24px 24px;
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 22%, #000 68%, transparent 100%);
-          mask-image: linear-gradient(to bottom, transparent 0, #000 22%, #000 68%, transparent 100%);
-}
-.hero .wrap { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: var(--s7); align-items: center; }
-.hero h1 { max-width: 12em; }
-.hero h1 em { font-style: normal; color: var(--accent-text); }
-
-/* Hero art: the brand's routes between players, with crates on the move. */
-.hero-art { width: 100%; height: auto; max-width: 470px; justify-self: end; overflow: visible; }
-.art .route path { fill: none; stroke: var(--fg); stroke-width: 8; stroke-linecap: round; stroke-linejoin: round; }
-.art .route .dotted { stroke-dasharray: 0 16; stroke-width: 9; }
-.art .route .faint { opacity: .22; }
-.art .node { fill: var(--fg); }
-.art .ping { fill: none; stroke: var(--accent); stroke-width: 3; opacity: 0; transform-box: fill-box; transform-origin: center; }
-.art .hub { fill: var(--bg); stroke: var(--fg); stroke-width: 6; }
-.art .hub-core { fill: var(--accent); opacity: 0; transform-box: fill-box; transform-origin: center; }
-.art .crate rect { fill: var(--accent); }
-.art .ring { fill: none; stroke: var(--accent); stroke-width: 3; }
-.art .field { fill: var(--surface); stroke: var(--line-strong); stroke-width: 2; }
-.art text { fill: var(--fg); font: 15px var(--mono); }
-.art .caret { fill: var(--accent); }
-
-@media (prefers-reduced-motion: no-preference) {
-  .hero-art .ping { animation: ping 3.6s var(--ease) infinite; }
-  .hero-art .ping:nth-of-type(2) { animation-delay: .9s; }
-  .hero-art .ping:nth-of-type(3) { animation-delay: 1.8s; }
-  .hero-art .ping:nth-of-type(4) { animation-delay: 2.7s; }
-  .hero-art .route .dotted { animation: march 1.2s linear infinite; }
-  .hero-art .route .faint { animation: breathe 4s ease-in-out infinite; }
-  .hero-art .hub { animation: hub 7s linear infinite; }
-  .hero-art .hub-core { animation: arrive 7s linear infinite; }
-
-  /* Crates travel along the routes. Without offset-path support they stay where the static art puts them. */
-  @supports (offset-path: path("M0 0")) {
-    .hero-art .crate { transform: none; offset-rotate: 0deg; animation: haul var(--t, 6s) var(--d, 0s) linear infinite both; }
-    .hero-art .c1 { offset-path: path("M72 286V128q0-48 48-48h84"); --t: 7s; }
-    .hero-art .c2 { offset-path: path("M240 112V286"); --t: 5s; --d: -2.2s; }
-    .hero-art .c3 { offset-path: path("M254 300H394"); --t: 6s; --d: -4s; }
-  }
-  .art .caret { animation: blink 1.1s steps(1) infinite; }
-}
-@keyframes ping { 0% { transform: scale(1); opacity: .9; } 60%, 100% { transform: scale(2.4); opacity: 0; } }
-@keyframes march { to { stroke-dashoffset: -32; } }
-@keyframes breathe { 50% { opacity: .5; } }
-@keyframes haul {
-  0% { offset-distance: 0%; opacity: 0; transform: scale(.4); }
-  8% { opacity: 1; transform: none; }
-  88% { opacity: 1; transform: none; }
-  100% { offset-distance: 100%; opacity: 0; transform: scale(.4); }
-}
-@keyframes arrive { 0%, 86% { opacity: 0; transform: scale(.4); } 92% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(1.4); } }
-@keyframes hub { 0%, 86% { stroke: var(--fg); } 92% { stroke: var(--accent); } 100% { stroke: var(--fg); } }
-@keyframes blink { 50% { opacity: 0; } }
-
-/* Live numbers */
-.live { margin-top: var(--s5); }
 .stats {
   display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0;
   border: 1px solid var(--line); border-radius: var(--r3); background: var(--surface); overflow: hidden; box-shadow: var(--shadow);
@@ -281,8 +215,6 @@ main { display: block; }
 .stats dd { margin: 0 0 var(--s1); font-size: clamp(28px, 4vw, 40px); font-weight: 700; line-height: 1.1; letter-spacing: -0.03em;
             font-variant-numeric: tabular-nums; }
 .stats div { display: flex; flex-direction: column-reverse; justify-content: flex-end; }
-.live-note { display: flex; align-items: baseline; gap: var(--s3); margin: var(--s3) var(--s1) 0; }
-.live-note .dot { transform: translateY(-1px); }
 @media (prefers-reduced-motion: no-preference) {
   .stats dd.changed { animation: bump .6s var(--ease); }
 }
@@ -300,41 +232,6 @@ main { display: block; }
 .card h3 a::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }   /* whole card is the link */
 .card:has(h3 a):hover { transform: translateY(-2px); border-color: var(--accent); }
 .card p { color: var(--muted); }
-.card .mini { display: block; width: 100%; max-width: 180px; height: auto; margin: 0 0 var(--s4); }
-.mini .route path { stroke-width: 4; }
-.mini .hub { stroke-width: 4; }
-@media (prefers-reduced-motion: no-preference) {
-  .card:hover .mini .ring { animation: ping-soft 1.2s var(--ease) infinite; transform-box: fill-box; transform-origin: center; }
-  .card:hover .mini .hub { animation: hub 1.2s linear infinite; }
-}
-@keyframes ping-soft { 50% { transform: scale(1.25); } }
-
-/* Steps on a route: numbered nodes joined by a line. */
-.steps { list-style: none; padding: 0; margin: 0 0 var(--s5); counter-reset: step; }
-.steps li { position: relative; padding: 0 0 var(--s5) 48px; margin: 0; counter-increment: step; }
-.steps li::before {
-  content: counter(step); position: absolute; left: 0; top: -2px; width: 30px; height: 30px; border-radius: 50%;
-  display: grid; place-items: center; background: var(--fg); color: var(--bg); font: 700 14px/1 var(--font);
-}
-.steps li::after { content: ""; position: absolute; left: 13px; top: 32px; bottom: 4px; width: 4px; border-radius: 2px; background: var(--line); }
-.steps li:last-child { padding-bottom: 0; }
-.steps li:last-child::after { display: none; }
-.steps li:last-child::before { background: var(--accent); color: var(--ink); border-radius: 7px; }
-
-/* Principles */
-.principles { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); gap: var(--s5) var(--s6); }
-.principles li { margin: 0; padding-top: var(--s4); border-top: 2px solid var(--line); }
-.principles b { display: block; margin-bottom: var(--s1); }
-.principles b::before { content: ""; display: inline-block; width: 10px; height: 10px; margin-right: 10px; border-radius: 2.5px; background: var(--accent); }
-.principles span { color: var(--muted); }
-
-/* Scroll-in: sections rise into place where the browser supports scroll-driven animations (no JavaScript). */
-@supports (animation-timeline: view()) {
-  @media (prefers-reduced-motion: no-preference) {
-    .reveal { animation: rise linear both; animation-timeline: view(); animation-range: entry 0% entry 40%; }
-  }
-}
-@keyframes rise { from { opacity: 0; transform: translateY(24px); } }
 
 /* ---------------------------------------------------------------- footer */
 
@@ -352,72 +249,11 @@ main { display: block; }
 .footer-notes p { margin: 0; max-width: 78em; font-size: 14px; line-height: 1.7; color: var(--muted); }
 .footer-notes a { color: var(--fg); }
 
-/* ---------------------------------------------------------------- documentation */
-
-.docs { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: var(--s7); padding-top: var(--s6); }
-.docs-nav { position: relative; }
-.docs-nav ul { list-style: none; margin: 0; padding: 0; position: sticky; top: 96px; }
-.docs-nav li { position: relative; margin: 0; padding-left: 26px; }
-/* The nav is a route: a line through every page, the current page is the crate. */
-.docs-nav li::before { content: ""; position: absolute; left: 5px; top: 0; bottom: 0; width: 3px; background: var(--line); }
-.docs-nav li:first-child::before { top: 50%; }
-.docs-nav li:last-child::before { bottom: 50%; }
-.docs-nav li::after { content: ""; position: absolute; left: 1px; top: calc(50% - 5.5px); width: 11px; height: 11px; border-radius: 50%; background: var(--line-strong); transition: background .15s, transform .2s var(--ease); }
-.docs-nav li:has(a[aria-current="page"])::after { background: var(--accent); border-radius: 3px; transform: scale(1.15); }
-.docs-nav li:hover::after { background: var(--fg); }
-.docs-nav a { display: block; padding: 8px 12px; border-radius: var(--r1); text-decoration: none; font-weight: 600; font-size: 15px; color: var(--muted); }
-.docs-nav a:hover { color: var(--fg); background: var(--surface-2); }
-.docs-nav a[aria-current="page"] { color: var(--fg); }
-
-.doc { min-width: 0; max-width: 46em; }
-.doc h1 { font-size: clamp(32px, 5vw, 46px); margin-top: 0; }
-.doc h2 { font-size: clamp(22px, 2.6vw, 27px); margin: var(--s7) 0 var(--s3); padding-top: var(--s5); border-top: 1px solid var(--line); }
-.doc h2 + p, .doc h2 + ul, .doc h2 + ol { margin-top: 0; }
-.doc h2 a.anchor { margin-left: .3em; color: var(--muted); text-decoration: none; opacity: 0; transition: opacity .15s; }
-.doc h2:hover a.anchor { opacity: 1; }
-.table-wrap { margin: var(--s4) 0 var(--s5); overflow-x: auto; }
-.doc table { width: 100%; border-collapse: collapse; font-size: 15.5px; }
-.doc :not(pre) > code { overflow-wrap: anywhere; }
-.doc th, .doc td { text-align: left; vertical-align: top; padding: 10px 14px; border-bottom: 1px solid var(--line); }
-.doc th { font-size: 13px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
-.doc .cards { margin: var(--s5) 0; }
-.faq dt { font-weight: 700; margin-top: var(--s5); }
-.faq dd { margin: var(--s2) 0 0; padding: var(--s1) 0 var(--s1) var(--s4); border-left: 3px solid var(--line); }
-.faq dd p { margin: 0 0 var(--s2); }
-.faq dd ul { margin: 0 0 var(--s2); }
-/* A message as the game shows it: quoted from the mod's own text table. */
-.faq dt[id] { scroll-margin-top: 96px; }
-.msg {
-  margin: 0 0 var(--s3); padding: var(--s3) var(--s4); border-radius: var(--r1); background: var(--surface);
-  border: 1px solid var(--line); border-left: 3px solid var(--accent); font-size: 15.5px;
-}
-.msg + .msg { margin-top: calc(-1 * var(--s2)); }
-.msg-alt { margin: 0 0 var(--s2); font-size: 13.5px; color: var(--muted); }
-.msg-alt b { color: var(--fg); font-weight: 600; }
-.msg-list { margin: 0 0 var(--s3); padding: var(--s2) var(--s4) var(--s2) 2.2em; border-radius: var(--r1);
-            background: var(--surface); border: 1px solid var(--line); font-size: 15px; }
-.msg-list li + li { margin-top: var(--s1); }
-.edit { margin-top: var(--s8); padding-top: var(--s4); border-top: 1px solid var(--line); }
-
-/* ---------------------------------------------------------------- 404 */
-
-.notfound { padding: var(--s8) 0; }
-.notfound .hero-art { max-width: 320px; justify-self: start; margin-bottom: var(--s5); }
-
 /* ---------------------------------------------------------------- narrow screens */
 
 @media (max-width: 900px) {
-  .hero .wrap { grid-template-columns: 1fr; gap: var(--s5); }
-  .hero-art { order: -1; max-width: 340px; justify-self: start; }
   .footer-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .footer-brand { grid-column: 1 / -1; }
-  .docs { grid-template-columns: minmax(0, 1fr); gap: var(--s5); padding-top: var(--s4); }
-  .docs-nav { min-width: 0; }
-  .docs-nav ul { position: static; display: flex; gap: var(--s2); overflow-x: auto; padding-bottom: var(--s2); scrollbar-width: thin; }
-  .docs-nav li { padding: 0; flex: none; }
-  .docs-nav li::before, .docs-nav li::after { display: none; }
-  .docs-nav a { border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; white-space: nowrap; }
-  .docs-nav a[aria-current="page"] { border-color: var(--accent); background: var(--surface); }
 }
 
 @media (max-width: 640px) {
@@ -426,20 +262,15 @@ main { display: block; }
   .top .wrap { min-height: 0; }
   .logo { height: 34px; }
   .top nav { width: 100%; margin: 0 -12px; gap: 0; }
-  .hero { padding-top: var(--s5); }
-  .hero-art { max-width: 230px; }
   .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .stats div { padding: var(--s4); }
   .stats div:nth-child(3) { border-left: 0; }
   .stats div:nth-child(n+3) { border-top: 1px solid var(--line); }
-  .section { padding-top: var(--s7); }
-  .notfound { padding-top: var(--s6); }
   .footer-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .site-footer { margin-top: var(--s8); }
   pre { padding: var(--s3) var(--s4); font-size: 13px; }
 }
 
 @media print {
-  .reveal, .hero-art * { animation: none !important; }
   .top, .site-footer nav, .actions { display: none; }
 }
