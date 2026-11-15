@@ -1,4 +1,4 @@
 {
   "$schema": "../schema/compatibility.schema.json",
-  "luxon": ["v1.5", "v1.5-haulnet.1"]
+  "luxon": ["v1.5"]
 }
