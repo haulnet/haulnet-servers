@@ -3,86 +3,11 @@
 The public list of Haulnet servers: official ones run by the Haulnet project and community ones.
 Live status: [servers.haulnet.cc](https://servers.haulnet.cc/).
 
-[Haulnet](https://github.com/haulnet) lets R.E.P.O. players host games on servers they control instead of
-Photon Cloud. When friends cannot connect to the host's PC directly, the host can create the game on a
-server listed here. The Haulnet mod downloads this list, measures the ping to every server and shows
-one entry per city in the game's region menu.
-
-Haulnet is a fan project. It is not affiliated with or endorsed by semiwork (R.E.P.O.) or Exit Games (Photon).
-
-## The published list
-
-After every merge to `main`, CI publishes the list to GitHub Pages at `servers.haulnet.cc`
-(the old `haulnet.github.io/haulnet-servers/` addresses redirect there):
-
-| URL | Contents |
-|---|---|
-| `https://servers.haulnet.cc/v1/servers.json` | the list, schema version 1 |
-| `https://servers.haulnet.cc/` | the same list as a web page |
-| `https://servers.haulnet.cc/schema/servers-v1.schema.json` | JSON Schema of the list |
-
-```json
-{
-  "schema_version": 1,
-  "updated_at": "2026-11-14T12:00:00Z",
-  "source_commit": "<40 hex characters>",
-  "compatibility": { "luxon": ["v1.5"] },
-  "status_url": "https://monitor.haulnet.cc/v1/status.json",
-  "regions": [{ "id": "europe", "name": "Europe" }],
-  "cities": [{ "id": "moscow", "name": "Moscow", "country": "RU", "region": "europe",
-               "display_name": "Europe [Moscow]" }],
-  "servers": [{
-    "id": "europe-moscow-1",
-    "display_name": "Europe [Moscow] #1",
-    "region": "europe", "city": "moscow", "number": 1,
-    "host": "msk1.example.org", "port": 27000, "status_port": 27080,
-    "operator": { "name": "Example Team", "github": "example-user", "contact": "https://example.org/" }
-  }]
-}
-```
-
-- `regions` lists every region in display order; `cities` lists only cities that have servers.
-- `servers` are ordered by region, city name and number. Use `id` to refer to a server, not `display_name`.
-- Live load and version: `GET http://<host>:<status_port>/status` (IPv6 hosts in brackets) answers the
-  `haulnet-server` status. A server whose `luxon` version is not in `compatibility.luxon` does not work with
-  the current game.
-- `status_url` (optional) names the live document of the registry monitor (see "Live status" below).
-- Version 1 may gain new optional fields; readers must ignore fields they do not know. A change that would
-  break existing readers is published under a new path (`/v2/`) while `/v1/` keeps being updated.
-
-## Live status
-
-The page `https://servers.haulnet.cc/` also shows whether each server answers, its load, version and uptime.
-The data comes from the Haulnet registry monitor ([`monitor/`](monitor/)), which asks every listed server's
-status endpoint once a minute from Moscow over IPv4 and keeps the results for 90 days:
-
-| URL | Contents |
-|---|---|
-| `https://monitor.haulnet.cc/v1/status.json` | state (`online`, `offline` after 3 failed checks in a row, `pending`), versions, rooms and players, uptime for 24 hours, 7 and 30 days |
-| `https://monitor.haulnet.cc/v1/history/<id>.json` | daily totals of one server for the last 30 days |
-
-The page also draws one bar per day for the last 30 days. When a listed server stays unreachable for an hour,
-reports a LuxonServer version the game does not support, or runs an old `haulnet-server` release for a long time
-(two weeks; two days when a minor version behind), the monitor opens an issue here that mentions the operator's
-`operator.github` account, and closes it when the problem is gone.
-
-The monitor shows whether a server answers from one place; it is not the ping of a player. It never changes
-`servers.json`: a server is removed only by a pull request. The mod checks every server itself (ping, status
-endpoint) and uses the monitor only to rank servers: through `status_url` in the list it reads each server's uptime
-over 24 hours and 7 days and moves less stable servers down. A server the monitor cannot reach still works in the
-game when the player's own check reaches it.
-
-## Server names
-
-Every server is named `<Region> [<City>] #<N>`, for example `Europe [Moscow] #1` or `Asia [Tokyo] #2`.
-Nobody types the name: CI builds it from the entry, so it is always consistent.
-
-- **Region** comes from the city. Regions are fixed: Europe, Asia, North America, South America, Oceania,
-  Africa, Middle East. A city belongs to the region of its geography, not of its country
-  (Moscow is in Europe, Novosibirsk in Asia).
-- **City** is an id from [`data/locations.json`](data/locations.json).
-- **N** is the server's number in its city. A new server takes the **smallest number not used** in that
-  city: if Moscow has #1 and #3, the next server is #2. Existing servers keep their number.
+[Haulnet](https://haulnet.cc/) is a mod that lets R.E.P.O. players play without Photon Cloud: on the host's own
+PC, on a Haulnet server or on any server by address. The servers listed here appear in the game as one row per city
+on the region page, such as *Europe [Moscow]*; Haulnet measures the ping, checks every server of the city and uses one
+that answers and runs a compatible version. Nobody needs to reach the host's PC, and a Haulnet server can stand in
+any city, close to its players.
 
 ## Adding a server
 
@@ -174,6 +99,86 @@ Maintainers may remove any server that breaks these rules or harms players. Repo
 through an [issue](../../issues/new/choose).
 
 Everything in an entry is public, including the operator name and GitHub account.
+
+## Server names
+
+Every server is named `<Region> [<City>] #<N>`, for example `Europe [Moscow] #1` or `Asia [Tokyo] #2`.
+Nobody types the name: CI builds it from the entry, so it is always consistent.
+
+- **Region** comes from the city. Regions are fixed: Europe, Asia, North America, South America, Oceania,
+  Africa, Middle East. A city belongs to the region of its geography, not of its country
+  (Moscow is in Europe, Novosibirsk in Asia).
+- **City** is an id from [`data/locations.json`](data/locations.json).
+- **N** is the server's number in its city. A new server takes the **smallest number not used** in that
+  city: if Moscow has #1 and #3, the next server is #2. Existing servers keep their number.
+
+## Live status
+
+The page `https://servers.haulnet.cc/` also shows whether each server answers, its load, version and uptime.
+The data comes from the Haulnet registry monitor ([`monitor/`](monitor/)), which asks every listed server's
+status endpoint once a minute from Moscow over IPv4 and keeps the results for 90 days:
+
+| URL | Contents |
+|---|---|
+| `https://monitor.haulnet.cc/v1/status.json` | state (`online`, `offline` after 3 failed checks in a row, `pending`), versions, rooms and players, uptime for 24 hours, 7 and 30 days |
+| `https://monitor.haulnet.cc/v1/history/<id>.json` | daily totals of one server for the last 30 days |
+
+The page also draws one bar per day for the last 30 days. When a listed server stays unreachable for an hour,
+reports a LuxonServer version the game does not support, or runs an old `haulnet-server` release for a long time
+(two weeks; two days when a minor version behind), the monitor opens an issue here that mentions the operator's
+`operator.github` account, and closes it when the problem is gone.
+
+The monitor shows whether a server answers from one place; it is not the ping of a player. It never changes
+`servers.json`: a server is removed only by a pull request. The mod checks every server itself (ping, status
+endpoint) and uses the monitor only to rank servers: through `status_url` in the list it reads each server's uptime
+over 24 hours and 7 days and moves less stable servers down. A server the monitor cannot reach still works in the
+game when the player's own check reaches it.
+
+## The published list
+
+After every merge to `main`, CI publishes the list to GitHub Pages at `servers.haulnet.cc`
+(the old `haulnet.github.io/haulnet-servers/` addresses redirect there):
+
+| URL | Contents |
+|---|---|
+| `https://servers.haulnet.cc/v1/servers.json` | the list, schema version 1 |
+| `https://servers.haulnet.cc/` | the same list as a web page |
+| `https://servers.haulnet.cc/schema/servers-v1.schema.json` | JSON Schema of the list |
+
+```json
+{
+  "schema_version": 1,
+  "updated_at": "2026-11-14T12:00:00Z",
+  "source_commit": "<40 hex characters>",
+  "compatibility": { "luxon": ["v1.5"] },
+  "status_url": "https://monitor.haulnet.cc/v1/status.json",
+  "regions": [{ "id": "europe", "name": "Europe" }],
+  "cities": [{ "id": "moscow", "name": "Moscow", "country": "RU", "region": "europe",
+               "display_name": "Europe [Moscow]" }],
+  "servers": [{
+    "id": "europe-moscow-1",
+    "display_name": "Europe [Moscow] #1",
+    "region": "europe", "city": "moscow", "number": 1,
+    "host": "msk1.example.org", "port": 27000, "status_port": 27080,
+    "operator": { "name": "Example Team", "github": "example-user", "contact": "https://example.org/" }
+  }]
+}
+```
+
+- `regions` lists every region in display order; `cities` lists only cities that have servers.
+- `servers` are ordered by region, city name and number. Use `id` to refer to a server, not `display_name`.
+- Live load and version: `GET http://<host>:<status_port>/status` (IPv6 hosts in brackets) answers the
+  `haulnet-server` status. A server whose `luxon` version is not in `compatibility.luxon` does not work with
+  the current game.
+- `status_url` (optional) names the live document of the registry monitor (see "Live status" above).
+- Version 1 may gain new optional fields; readers must ignore fields they do not know. A change that would
+  break existing readers is published under a new path (`/v2/`) while `/v1/` keeps being updated.
+
+## Disclaimer
+
+Haulnet is an independent fan project. It is not affiliated with or endorsed by semiwork (developers of
+R.E.P.O.) or Exit Games GmbH. "R.E.P.O." and "Photon" are trademarks of their respective owners and are used
+only to describe compatibility.
 
 ## License
 
