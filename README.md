@@ -86,6 +86,12 @@ Nobody types the name: CI builds it from the entry, so it is always consistent.
 
 ## Adding a server
 
+This list is for **public** servers. A listed server appears in every player's game as part of a city row and
+Haulnet sends other people's games to it, so its operator takes on a duty: keep it online around the clock on a
+stable address, keep it updated and answer reports (see [Rules for operators](#rules-for-operators)). A server for
+you and your friends does not belong here: share its address, and friends pick it with "+ Server by address". The
+difference is explained at [haulnet.cc/docs/server](https://haulnet.cc/docs/server/#private-or-public).
+
 One pull request per server. Your server must run the `haulnet-server` package and be reachable from the
 internet: UDP 27000–27002 for players and TCP 27080 (the status endpoint) for the mod and for CI.
 
@@ -155,8 +161,10 @@ python tools/registry.py build --out site
 
 - Run the official `haulnet-server` package and keep it updated; the mod does not choose a server
   that runs an unsupported version for its city, and the status page marks it Incompatible.
-- Keep the server reachable. Servers that stay unreachable for a week may be removed; open a new pull
-  request when the server is back.
+- Keep the server online around the clock on a stable public address: a machine that runs all the time (a VPS or
+  a dedicated server), not a PC that sleeps. The monitor checks every minute and opens an issue after an hour
+  offline; outages move the server down in its city; servers that stay unreachable for a week may be removed. Open a
+  new pull request when the server is back.
 - Do not inspect, record or sell players' game traffic beyond what is needed to run and protect the server.
   No ads, payments or account requirements for players.
 - Answer reports about your server through the GitHub account in `operator.github`.
