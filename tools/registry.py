@@ -532,7 +532,7 @@ def build_list(locations, supported: list[str], servers: list[Server], commit: s
 
 PAGE_NAV = (("Docs", "https://haulnet.cc/docs/"), ("Servers", None),
             ("Run a server", "https://haulnet.cc/docs/server/"), ("GitHub", "https://github.com/haulnet"))
-# The page shares the look of haulnet.cc: pages/site.css and tools/logo.svg are copies of the site's style.css and
+# The page shares the look of haulnet.cc: pages/base.css and tools/logo.svg are copies of the site's base.css and
 # _partials/logo.svg (haulnet/haulnet.github.io); pages/status.css holds the rules of this page only.
 LOGO = ROOT / "tools" / "logo.svg"
 
@@ -587,7 +587,7 @@ def render_index(listing: dict) -> str:
 <link rel="icon" href="favicon.ico" sizes="32x32">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="stylesheet" href="site.css">
+<link rel="stylesheet" href="base.css">
 <link rel="stylesheet" href="status.css">
 <script src="status.js" defer></script>
 </head>
