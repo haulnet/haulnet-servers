@@ -4,8 +4,13 @@ monitor.haulnet.cc {
 	encode gzip
 	header {
 		Strict-Transport-Security "max-age=31536000"
+		# An API, not a page: keep it out of search engines (servers.haulnet.cc is the page).
+		X-Robots-Tag "noindex"
 		-Server
 	}
+	respond /robots.txt "User-agent: *
+Disallow: /
+" 200
 	@root path /
 	redir @root https://servers.haulnet.cc/ 302
 	reverse_proxy 127.0.0.1:8080

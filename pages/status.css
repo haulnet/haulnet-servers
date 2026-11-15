@@ -1,0 +1,65 @@
+/* servers.haulnet.cc: rules of the server table on top of site.css (a copy of haulnet.cc/style.css). */
+
+.page-head { padding: var(--s7) 0 var(--s5); }
+.page-head h1 { font-size: clamp(32px, 5vw, 48px); margin-bottom: var(--s3); }
+.page-head .lead { margin-bottom: var(--s5); }
+.page-head .pill { margin: 0; }
+
+.board { overflow-x: auto; margin-top: var(--s5); border: 1px solid var(--line); border-radius: var(--r3); background: var(--surface);
+         box-shadow: var(--shadow); }
+.board table { width: 100%; border-collapse: collapse; font-size: 15px; }
+.board th, .board td { text-align: left; padding: 13px 14px; border-bottom: 1px solid var(--line); white-space: nowrap; vertical-align: middle; }
+.board thead th { font-size: 12.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted);
+                  background: var(--surface-2); }
+.board tbody tr:last-child > * { border-bottom: 0; }
+.board tbody tr { transition: background .15s; }
+.board tbody tr:hover { background: var(--surface-2); }
+.board tbody th { font-weight: 650; }
+.board .addr { display: block; width: max-content; margin-top: 4px; font-size: 12.5px; font-weight: 400; color: var(--muted); }
+.board [data-col="state"] { min-width: 9.5em; }
+
+.state { display: inline-flex; align-items: center; gap: 8px; padding: 3px 10px 3px 9px; border-radius: 999px;
+         font-size: 13.5px; font-weight: 600; background: var(--surface-2); color: var(--muted); }
+.state .dot { width: 7px; height: 7px; }
+.state.ok { color: var(--ok); background: color-mix(in srgb, var(--ok) 12%, transparent); }
+.state.ok .dot { background: var(--ok); }
+.state.warn { color: var(--warn); background: color-mix(in srgb, var(--warn) 14%, transparent); }
+.state.warn .dot { background: var(--warn); }
+.state.bad { color: var(--bad); background: color-mix(in srgb, var(--bad) 12%, transparent); }
+.state.bad .dot { background: var(--bad); }
+.state.bad .dot::after, .state.warn .dot::after { display: none; }
+td.warn { color: var(--warn); }
+
+.bars { display: block; width: 120px; height: 18px; }
+.bars .ok { fill: var(--ok); } .bars .warn { fill: var(--warn); } .bars .bad { fill: var(--bad); }
+.bars .none { fill: var(--muted); opacity: .35; }
+@media (prefers-reduced-motion: no-preference) {
+  .bars rect { transform-box: fill-box; transform-origin: bottom; animation: grow .5s var(--ease) both; }
+  @keyframes grow { from { transform: scaleY(0); } }
+}
+
+.cards.below { margin-top: var(--s7); }
+
+/* Narrow screens: every server becomes a card; the header row is hidden and each cell shows its label. */
+@media (max-width: 1080px) {
+  .board { background: transparent; border: 0; box-shadow: none; overflow: visible; }
+  .board thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .board table, .board tbody { display: block; }
+  .board tbody tr { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 16px; align-items: center;
+                    margin-bottom: var(--s3); padding: var(--s4); border: 1px solid var(--line); border-radius: var(--r2);
+                    background: var(--surface); }
+  .board tbody tr:hover { background: var(--surface); }
+  .board tbody th { grid-column: 1 / -1; padding: 0 0 var(--s2); font-size: 17px; border: 0; }
+  .board td { display: contents; }
+  .board td::before { content: attr(data-label); color: var(--muted); font-size: 13px; }
+  .board td > *, .board td { white-space: normal; }
+  .board .state, .board .bars { justify-self: start; }
+  .board tbody tr > * { border-bottom: 0; }
+}
+
+/* Status legend */
+.section-sm { margin-top: var(--s7); }
+.section-sm h2 { font-size: clamp(20px, 2.4vw, 24px); }
+.legend { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: var(--s3) var(--s5); margin: 0 0 var(--s4); }
+.legend div { display: grid; gap: var(--s2); align-content: start; }
+.legend dd { margin: 0; color: var(--muted); font-size: 14.5px; }

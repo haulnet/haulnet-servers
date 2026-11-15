@@ -4,6 +4,28 @@
   "use strict";
   const table = document.querySelector("table[data-status-url]");
   const note = document.getElementById("status-note");
+  const dot = document.getElementById("status-dot");
+  const sum = (name, text) => {
+    const el = document.querySelector(`[data-sum="${name}"]`);
+    if (!el || el.textContent === text) return;
+    const had = el.textContent !== "—";
+    el.textContent = text;
+    if (had) { el.classList.remove("changed"); void el.offsetWidth; el.classList.add("changed"); }
+  };
+  const live = (on) => { if (dot) dot.classList.toggle("idle", !on); };
+  // The status cell is a pill with a dot; the other cells are plain text.
+  const setState = (row, text, cls, title) => {
+    const cell = row.querySelector('[data-col="state"]');
+    if (!cell) return;
+    const pill = document.createElement("span");
+    pill.className = `state ${cls || ""}`.trim();
+    const d = document.createElement("span");
+    d.className = cls === "ok" ? "dot" : "dot idle";
+    d.setAttribute("aria-hidden", "true");
+    pill.append(d, text);
+    cell.replaceChildren(pill);
+    if (title) cell.title = title; else cell.removeAttribute("title");
+  };
   if (!table || !note || !window.fetch) return;
   const url = table.dataset.statusUrl;
   const REFRESH_MS = 60000;
@@ -37,6 +59,8 @@
       if (!row.dataset.id) continue;
       for (const col of ["state", "load", "version", "uptime", "history"]) set(row, col, "—");
     }
+    for (const name of ["servers", "players", "games"]) sum(name, "—");
+    live(false);
   };
 
   const render = (doc) => {
@@ -49,16 +73,16 @@
       const why = s.last_error ? reasons[s.last_error] || s.last_error : "";
       if (s.state === "online") {
         let text = "Online", cls = "ok";
-        if (s.compatible === false) { text = "Outdated"; cls = "warn"; }
+        if (s.compatible === false) { text = "Incompatible"; cls = "warn"; }
         else if (st && st.draining) { text = "Updating"; cls = "warn"; }
         else if (st && !st.accepting) { text = "Full"; cls = "warn"; }
         const extra = s.last_error ? ` · last check failed: ${why}` : "";
         const ping = s.connect_ms !== null ? ` · connect ${Math.round(s.connect_ms)} ms from the monitor` : "";
-        set(row, "state", text, cls, `Online for ${ago(s.since, now)}${ping}${extra}`);
+        setState(row, text, cls, `Online for ${ago(s.since, now)}${ping}${extra}`);
       } else if (s.state === "offline") {
-        set(row, "state", `Offline for ${ago(s.since, now)}`, "bad", why);
+        setState(row, `Offline for ${ago(s.since, now)}`, "bad", why);
       } else {
-        set(row, "state", "Checking…", "", why);
+        setState(row, "Checking…", "", why);
       }
       if (st && s.state === "online") {
         const players = st.max_players ? `${st.players}/${st.max_players}` : `${st.players}`;
@@ -72,13 +96,18 @@
       }
       set(row, "uptime", percent(s.uptime["30d"]), "", `24 h: ${percent(s.uptime["24h"])} · 7 days: ${percent(s.uptime["7d"])}`);
     }
+    const online = doc.servers.filter((s) => s.state === "online");
+    sum("servers", `${online.length}/${doc.servers.length}`);
+    sum("players", String(online.reduce((n, s) => n + (s.status ? s.status.players : 0), 0)));
+    sum("games", String(online.reduce((n, s) => n + (s.status ? s.status.rooms : 0), 0)));
     const age = (now - Date.parse(doc.generated_at)) / 1000;
+    live(age <= STALE_S);
     note.textContent = age > STALE_S
       ? `Live status is out of date: the monitor's last check was ${ago(doc.generated_at, now)} ago.`
       : `Live status from the Haulnet monitor (${doc.monitor.address_family}), checked every ` +
         `${doc.monitor.interval_s < 60 ? `${doc.monitor.interval_s} s` : `${Math.round(doc.monitor.interval_s / 60)} min`}; ` +
         `last check ${ago(doc.generated_at, now)} ago. ` +
-        `It shows whether a server answers, not your ping: the game measures that itself.`;
+        `It shows whether a server answers, not your ping: the game measures that.`;
   };
 
   // History: one bar per UTC day for the last 30 days, loaded once per page view and every 10 minutes.

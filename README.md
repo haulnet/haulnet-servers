@@ -1,10 +1,11 @@
 # Haulnet servers
 
-The public list of community-run Haulnet servers.
+The public list of Haulnet servers: official ones run by the Haulnet project and community ones.
+Live status: [servers.haulnet.cc](https://servers.haulnet.cc/).
 
 [Haulnet](https://github.com/haulnet) lets R.E.P.O. players host games on servers they control instead of
 Photon Cloud. When friends cannot connect to the host's PC directly, the host can create the game on a
-community server listed here. The Haulnet mod downloads this list, measures the ping to every server and shows
+server listed here. The Haulnet mod downloads this list, measures the ping to every server and shows
 one entry per city in the game's region menu.
 
 Haulnet is a fan project. It is not affiliated with or endorsed by semiwork (R.E.P.O.) or Exit Games (Photon).
@@ -149,8 +150,8 @@ python tools/registry.py build --out site
 
 ## Rules for operators
 
-- Run the official `haulnet-server` package and keep it updated; the mod hides servers that run an
-  unsupported version.
+- Run the official `haulnet-server` package and keep it updated; the mod does not choose a server
+  that runs an unsupported version for its city, and the status page marks it Incompatible.
 - Keep the server reachable. Servers that stay unreachable for a week may be removed; open a new pull
   request when the server is back.
 - Do not inspect, record or sell players' game traffic beyond what is needed to run and protect the server.
