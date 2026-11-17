@@ -27,6 +27,9 @@ jobs:
       - name: Install dependencies
         run: pip install --disable-pip-version-check -r tools/requirements.txt
 
+      - name: Server list tool unit tests
+        run: python -m unittest discover -s tools -v
+
       - name: Check the registry
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
