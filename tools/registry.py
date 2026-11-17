@@ -211,6 +211,13 @@ def check_host(server: Server, report: Report) -> None:
         except ValueError:
             report.error(server.path, f"host '{host}' is not a valid IP address")
             return
+        if ip.version == 6:
+            # The monitor checks over IPv4 only (resolve_public in monitor/haulnet_monitor.py), so a server listed by
+            # an IPv6 address would always show as offline.
+            report.error(server.path, f"host '{host}' is an IPv6 address; a listed server must be reachable over IPv4: "
+                                      "use its public IPv4 address or a DNS name with an A record (an AAAA record "
+                                      "may be added to the same name)")
+            return
         if str(ip) != host:
             report.error(server.path, f"host: write the address as '{ip}'")
         if not ip.is_global:

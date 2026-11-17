@@ -1,5 +1,5 @@
 name: Other
-description: A question or suggestion about the registry itself.
+description: A question or suggestion about the server list itself.
 body:
   - type: textarea
     id: details

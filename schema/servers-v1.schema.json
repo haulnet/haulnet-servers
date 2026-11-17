@@ -8,7 +8,7 @@
   "properties": {
     "schema_version": { "const": 1 },
     "updated_at": {
-      "description": "Commit time of the registry state this list was built from (UTC, RFC 3339).",
+      "description": "Commit time of the repository state this list was built from (UTC, RFC 3339).",
       "type": "string",
       "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
     },
@@ -22,7 +22,7 @@
       }
     },
     "status_url": {
-      "description": "Optional. HTTPS address of the registry monitor's live document (state and uptime per server id, schema status.json version 1). Readers may use it to rank servers; whether a server is usable is still decided by the reader's own check of its status endpoint.",
+      "description": "Optional. HTTPS address of the Haulnet server monitor's live document (state and uptime per server id, schema status.json version 1). Readers may use it to rank servers; whether a server is usable is still decided by the reader's own check of its status endpoint.",
       "type": "string",
       "pattern": "^https://"
     },
@@ -68,7 +68,7 @@
           "host": { "type": "string" },
           "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
           "status_port": {
-            "description": "TCP port of the status endpoint: GET http://<host>:<status_port>/status (IPv6 host in brackets).",
+            "description": "TCP port of the status endpoint: GET http://<host>:<status_port>/status.",
             "type": "integer", "minimum": 1, "maximum": 65535
           },
           "operator": {

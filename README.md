@@ -18,7 +18,7 @@ you and your friends does not belong here: share its address, and friends pick i
 difference is explained at [haulnet.cc/docs/server](https://haulnet.cc/docs/server/#private-or-public).
 
 One pull request per server. Your server must run the `haulnet-server` package and be reachable from the
-internet: UDP 27000–27002 for players and TCP 27080 (the status endpoint) for the mod and for CI.
+internet over IPv4: UDP 27000–27002 for players and TCP 27080 (the status endpoint) for the mod and for CI.
 
 1. Fork this repository.
 2. Find your city in [`data/locations.json`](data/locations.json). If it is missing, add it:
@@ -48,7 +48,7 @@ internet: UDP 27000–27002 for players and TCP 27080 (the status endpoint) for 
    |---|---|
    | `city` | city id from `data/locations.json` |
    | `number` | the number from step 3, same as in the file name |
-   | `host` | public DNS name in lowercase, or a public IPv4/IPv6 address without brackets |
+   | `host` | public DNS name in lowercase with an A record, or a public IPv4 address. An IPv6 address is not accepted here: add it as an AAAA record of the same name, next to the A record |
    | `port` | UDP port of the server's NameServer |
    | `status_port` | optional: TCP port of the status endpoint, only if you changed `STATUS_ADDRESS` (default 27080). Never LuxonServer's own web API (5088) |
    | `operator.name` | person or team shown to players, 2–48 characters, no `<` or `>` |
@@ -64,8 +64,8 @@ internet: UDP 27000–27002 for players and TCP 27080 (the status endpoint) for 
 - the file is `servers/<region of the city>/<city>-<number>.json`, and nothing else is in `servers/`;
 - the city exists, its id is derived from its name, and the city list is in order;
 - numbers are unique per city, and a new server takes the smallest free number;
-- `host` is a valid DNS name or public IP address (no private, loopback, CGNAT, documentation or reserved
-  ranges and names), and `host` + `port` is not listed twice;
+- `host` is a valid DNS name or public IPv4 address (no private, loopback, CGNAT, documentation or reserved
+  ranges and names, and no IPv6 address), and `host` + `port` is not listed twice;
 - DNS names resolve to public addresses, and no two entries point at the same address and port;
 - official servers are the Haulnet project's: `operator.github` `haulnet` and a host `<city>-<N>.play.haulnet.cc`
   always go together, so no other entry can use either; servers.haulnet.cc lists official servers apart from
@@ -87,16 +87,16 @@ python tools/registry.py build --out site
 - Run the official `haulnet-server` package and keep it updated; the mod does not choose a server
   that runs an unsupported version for its city, and the status page marks it Incompatible.
 - Keep the server online around the clock on a stable public address: a machine that runs all the time (a VPS or
-  a dedicated server), not a PC that sleeps. The monitor checks every minute and opens an issue after an hour
-  offline; outages move the server down in its city; servers that stay unreachable for a week may be removed. Open a
-  new pull request when the server is back.
+  a dedicated server), not a PC that sleeps. The Haulnet server monitor checks every minute and opens an issue
+  after an hour offline; outages move the server down in its city; servers that stay unreachable for a week may be
+  removed. Open a new pull request when the server is back.
 - Do not inspect, record or sell players' game traffic beyond what is needed to run and protect the server.
   No ads, payments or account requirements for players.
 - Answer reports about your server through the GitHub account in `operator.github`.
 - Update or remove your entry by pull request when the address changes or the server shuts down.
 
 Maintainers may remove any server that breaks these rules or harms players. Report a problem with a server
-through an [issue](../../issues/new/choose).
+through an [issue](https://github.com/haulnet/haulnet-servers/issues/new/choose).
 
 Everything in an entry is public, including the operator name and GitHub account.
 
@@ -115,7 +115,7 @@ Nobody types the name: CI builds it from the entry, so it is always consistent.
 ## Live status
 
 The page `https://servers.haulnet.cc/` also shows whether each server answers, its load, version and uptime.
-The data comes from the Haulnet registry monitor ([`monitor/`](monitor/)), which asks every listed server's
+The data comes from the Haulnet server monitor ([`monitor/`](monitor/)), which asks every listed server's
 status endpoint once a minute from Moscow over IPv4 and keeps the results for 90 days:
 
 | URL | Contents |
@@ -136,8 +136,7 @@ game when the player's own check reaches it.
 
 ## The published list
 
-After every merge to `main`, CI publishes the list to GitHub Pages at `servers.haulnet.cc`
-(the old `haulnet.github.io/haulnet-servers/` addresses redirect there):
+After every merge to `main`, CI publishes the list to GitHub Pages at `servers.haulnet.cc`:
 
 | URL | Contents |
 |---|---|
@@ -167,10 +166,9 @@ After every merge to `main`, CI publishes the list to GitHub Pages at `servers.h
 
 - `regions` lists every region in display order; `cities` lists only cities that have servers.
 - `servers` are ordered by region, city name and number. Use `id` to refer to a server, not `display_name`.
-- Live load and version: `GET http://<host>:<status_port>/status` (IPv6 hosts in brackets) answers the
-  `haulnet-server` status. A server whose `luxon` version is not in `compatibility.luxon` does not work with
-  the current game.
-- `status_url` (optional) names the live document of the registry monitor (see "Live status" above).
+- Live load and version: `GET http://<host>:<status_port>/status` answers the `haulnet-server` status. A server
+  whose `luxon` version is not in `compatibility.luxon` does not work with the current game.
+- `status_url` (optional) names the live document of the Haulnet server monitor (see "Live status" above).
 - Version 1 may gain new optional fields; readers must ignore fields they do not know. A change that would
   break existing readers is published under a new path (`/v2/`) while `/v1/` keeps being updated.
 
