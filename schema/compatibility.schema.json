@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://servers.haulnet.cc/schema/compatibility.schema.json",
-  "title": "Haulnet registry compatibility",
+  "title": "Haulnet server list compatibility",
   "description": "LuxonServer versions that work with the current game, as reported by the status endpoint field 'luxon'. Changed by maintainers when the game or LuxonServer updates.",
   "type": "object",
   "additionalProperties": false,

@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://servers.haulnet.cc/schema/status.schema.json",
-  "title": "haulnet-server status (as checked by the registry)",
-  "description": "The part of the haulnet-server GET /status answer that the registry relies on. The server may send more fields.",
+  "title": "haulnet-server status (as checked for the server list)",
+  "description": "The part of the haulnet-server GET /status answer that the server list relies on. The server may send more fields.",
   "type": "object",
   "required": ["haulnet_server", "luxon", "rooms", "players", "accepting"],
   "properties": {
