@@ -614,6 +614,7 @@ def render_index(listing: dict) -> str:
     <h1>Haulnet servers</h1>
     <p class="lead">Official and community servers for R.E.P.O. with Haulnet. In the game they appear as one row per
       city on the region page; Haulnet picks a working, compatible server of that city for you.</p>
+    <p><a href="https://haulnet.cc/docs/install/">Install Haulnet</a> through Thunderstore or GitHub Releases.</p>
     <p class="pill"><span class="dot idle" id="status-dot" aria-hidden="true"></span><span id="status-note">Live status needs JavaScript.</span></p>
   </section>
 

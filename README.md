@@ -9,6 +9,8 @@ on the region page, such as *Europe [Moscow]*; Haulnet measures the ping, checks
 that answers and runs a compatible version. Nobody needs to reach the host's PC, and a Haulnet server can stand in
 any city, close to its players.
 
+Players can [install Haulnet](https://haulnet.cc/docs/install/) through Thunderstore or GitHub Releases.
+
 ## Adding a server
 
 This list is for **public** servers. A listed server appears in every player's game as part of a city row and
